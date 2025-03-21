@@ -72,13 +72,11 @@ int main(int argc, char *argv[])
 
     while (!heard_booga)
     {    
-        talker.SpeakOogaBooga(cave_talk::Say::SAY_OOGA);
-
         CaveTalk_Error_t error = listener.Listen();
         if (CAVE_TALK_ERROR_NONE != error)
         {
-            std::string error_str = CaveTalk_ErrorToString(error);
-            std::cout << "Error " << error_str << std::endl;
+            // std::string error_str = CaveTalk_ErrorToString(error);
+            // std::cout << "Error line 79 " << error_str << std::endl;
         }
     }
 
@@ -96,8 +94,8 @@ int main(int argc, char *argv[])
                 break;
             default:
                 std::string error_str = CaveTalk_ErrorToString(error);
-                std::cout << "Error " << error_str << std::endl;
-                std::cout << "Error " << error_str << std::endl;
+                //std::cout << "Error line 97 " << error_str << std::endl;
+                //std::cout << "Error line 98 " << error_str << std::endl;
                 break;
             }
         }
@@ -110,6 +108,7 @@ int main(int argc, char *argv[])
 
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_odom) >= std::chrono::milliseconds(1000))
         {
+            std::cout << "in odom print" << std::endl;
             std::cout << "Heard " << odometry_messages << " odometry messages" << std::endl;
             odometry_messages = 0;
             std::cout << "Heard " << movement_messages << " movement messages" << std::endl;

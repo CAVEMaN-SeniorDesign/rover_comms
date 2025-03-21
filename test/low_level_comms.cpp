@@ -53,6 +53,7 @@ public:
 };
 
 
+
 TEST_CASE("Test OogaBooga"){
     cave_talk::Talker talker(cave_talk::send);
     cave_talk::Listener listener(cave_talk::receive, std::make_shared<Callbacks>());
@@ -60,8 +61,8 @@ TEST_CASE("Test OogaBooga"){
     cave_talk::init();
     cave_talk::flush();
     auto start = std::chrono::high_resolution_clock::now();
-    while(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start) < std::chrono::milliseconds(10000)){
-        talker.SpeakOogaBooga(cave_talk::SAY_OOGA);
+    talker.SpeakOogaBooga(cave_talk::SAY_OOGA);
+    while(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start) < std::chrono::milliseconds(5000)){
         listener.Listen();
     }
 
@@ -76,9 +77,11 @@ TEST_CASE("Test Odom"){
     cave_talk::flush();
 
     auto start = std::chrono::high_resolution_clock::now();
-    while(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start) < std::chrono::milliseconds(10000)){
-        talker.SpeakOogaBooga(cave_talk::SAY_OOGA);
+
+    talker.SpeakOogaBooga(cave_talk::SAY_OOGA);
+    while(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start) < std::chrono::milliseconds(5000)){
         listener.Listen();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     REQUIRE(heard_booga == true);
@@ -87,6 +90,7 @@ TEST_CASE("Test Odom"){
     while(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start) < std::chrono::milliseconds(10000)){
         talker.SpeakMovement(0.5, 0.1);
         listener.Listen();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     std::cout << "Heard " << odometry_messages << " odometry messages" << std::endl;

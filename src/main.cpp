@@ -24,5 +24,6 @@ int main(int argc, char **argv) {
 
     rclcpp::spin(rover_node);
     rclcpp::shutdown();
+    cave_talk::deinit();
     return 0;
 }
