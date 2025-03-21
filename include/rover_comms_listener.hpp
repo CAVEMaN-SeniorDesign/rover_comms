@@ -44,7 +44,7 @@ public:
     void HearMovement(const CaveTalk_MetersPerSecond_t speed, const CaveTalk_RadiansPerSecond_t turn_rate) override;
     void HearCameraMovement(const CaveTalk_Radian_t pan, const CaveTalk_Radian_t tilt) override;
     void HearLights(const bool headlights) override;
-    // void HearMode(const bool manual) override;
+    void HearMode(const bool manual) override;
     void HearConfigServoWheels(const cave_talk::Servo &servo_wheel_0, const cave_talk::Servo &servo_wheel_1, const cave_talk::Servo &servo_wheel_2, const cave_talk::Servo &servo_wheel_3) override;
     void HearConfigServoCams(const cave_talk::Servo &servo_cam_pan, const cave_talk::Servo &servo_cam_tilt) override;
     void HearConfigMotor(const cave_talk::Motor &motor_wheel_0, const cave_talk::Motor &motor_wheel_1, const cave_talk::Motor &motor_wheel_2, const cave_talk::Motor &motor_wheel_3) override;
