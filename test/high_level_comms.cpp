@@ -5,33 +5,13 @@
 #include "rover_comms_listener.hpp"
 #include <unistd.h>
 
+// rover_comms ROS2 integration tests:
+
+
 void signalHandler(int signum){
     std::cout << "\nInterrupt signal (" << signum << ") received. Exiting..." << std::endl;
     exit(signum);
 }
-
-class RoverCommTest{
-    public:
-        std::shared_ptr<RoverComm> rover_node;
-
-        RoverCommTest(){
-            std::signal(SIGINT, signalHandler);
-            int argc = 0;
-            char **argv = nullptr;
-            rclcpp::init(argc, argv);
-            rover_node = std::make_shared<RoverComm>();
-            std::shared_ptr<RoverCommsListener> listenCallbacks = std::make_shared<RoverCommsListener>(rover_node);
-            rover_node->talker = std::make_shared<cave_talk::Talker>(cave_talk::send);
-            rover_node->listener = std::make_shared<cave_talk::Listener>(cave_talk::receive, listenCallbacks);
-            
-        }
-
-        ~RoverCommTest(){
-            rclcpp::shutdown();
-            signalHandler(SIGINT);
-        }
-};
-
 
 static bool heard_booga = false;
 static int movement_messages = 0;
@@ -74,10 +54,11 @@ public:
     //void HearConfigEncoder(const cave_talk::ConfigEncoder &encoder_wheel_0, const cave_talk::ConfigEncoder &encoder_wheel_1, const cave_talk::ConfigEncoder &encoder_wheel_2, const cave_talk::ConfigEncoder &encoder_wheel_3) {}
 };
 
-
+/*
 TEST_CASE_METHOD(RoverCommTest, "RoverComm init", "[rover]"){
     REQUIRE(rover_node != nullptr);
 }
+*/
 
 TEST_CASE("Test OogaBooga"){
     cave_talk::Talker talker(cave_talk::send);

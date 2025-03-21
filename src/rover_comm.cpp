@@ -10,10 +10,6 @@ RoverComm::RoverComm() : Node("rover_comm")
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1)); // "10" is queue-size for messages, how many to queue before dropping
 
-    // // Create serial publisher
-    // serial_read_pub_ = this->create_publisher<rover_interfaces::msg::Serial>(
-    //     "/serial_read/data", 10);
-
     // Odom publisher
     odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Odomplot>(
         "/odom_raw", 10);
@@ -88,12 +84,6 @@ void RoverComm::speak_callback(){
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-    if(first_talk_){
-        // Reset MCU in attempt to sync
-        talker->SpeakOogaBooga(cave_talk::SAY_BOOGA); // close loop by sending BOOGA
-        first_talk_ = false;
-    }
-
     if(talker && !(waiting_booga)){
         static bool first_log = true; // static persists between calls
 	    static bool first_log_cams = true;
