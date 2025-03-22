@@ -22,9 +22,10 @@
 #include <string>
 
 #include "cave_talk.h"
+#include "new_serial.hpp"
+#include "tinyxml2.h"
 #include "jetson_cave_talk.h"
-#include "ring_buffer.h"
-#include <termios.h>
+
 
 #define MAX_LINEAR_VEL 1.0
 #define MAX_ANGULAR_VEL 1.0
@@ -54,10 +55,10 @@ private:
     void listen_callback();
     void speak_callback();
     std::string gameControllerType();
+    bool openAndSendConfig(std::string file);
 
     // sub for /cmd_vel_joy topics and publish to joystick topic
     rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
-
     rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
 
     // Params
@@ -68,6 +69,11 @@ private:
     double prev_cam_tilt_;
     bool lights_toggle_; 
     bool first_talk_; // bool to assist syncing with MCU
+
+    // // serial params, can be modified in rover_comms/src/Serial_Config.xml
+    // std:string serial_port_ = "/dev/ttyTHS1";
+    // unsigned long serialBaud_ = 1000000;
+    // serial::Timeout timeout = serial::Timeout::simpleTimeout(0); // non-blocking
 };
 
 #endif // ROVER_COMM_HPP

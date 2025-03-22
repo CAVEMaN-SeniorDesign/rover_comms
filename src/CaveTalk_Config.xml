@@ -1,0 +1,28 @@
+<CaveTalk_Config>
+    <ConfigEncoder>
+        <Encoder_Wheel_0>
+            <smoothing_factor>0.1702893</smoothing_factor>
+            <radians_per_pulse>0.2</radians_per_pulse>
+            <pulses_per_period>0.32753809</pulses_per_period>
+            <mode>0</mode>
+        </Encoder_Wheel_0>
+        <Encoder_Wheel_1>
+            <smoothing_factor>0.1</smoothing_factor>
+            <radians_per_pulse>0.2132</radians_per_pulse>
+            <pulses_per_period>0.3879</pulses_per_period>
+            <mode>0</mode>
+        </Encoder_Wheel_1>
+        <Encoder_Wheel_2>
+            <smoothing_factor>0.185675685697</smoothing_factor>
+            <radians_per_pulse>0.2658756875678</radians_per_pulse>
+            <pulses_per_period>0.3</pulses_per_period>
+            <mode>0</mode>
+        </Encoder_Wheel_2>
+        <Encoder_Wheel_3>
+            <smoothing_factor>0.134634673467</smoothing_factor>
+            <radians_per_pulse>0.27867856596</radians_per_pulse>
+            <pulses_per_period>0.2343423243</pulses_per_period>
+            <mode>1</mode>
+        </Encoder_Wheel_3>
+    </ConfigEncoder>
+</CaveTalk_Config>

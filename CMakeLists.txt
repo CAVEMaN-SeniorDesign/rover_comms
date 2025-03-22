@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 project(rover_comms)
 
 # Use C++20 for compatibility with Ben & Kush's code
+# 
+# NOTE: NEED TO CLEANUP AND MAKE SHARED LIB INSTEAD OF COPY PASTE OVER AND OVER 
+# 
+
 set(CMAKE_CXX_STANDARD 20)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -25,39 +29,55 @@ set(CATCH_DIR /usr/local/include)
 add_subdirectory(${JETSON_CAVE_TALK_DIR})
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED) 
 find_package(std_msgs REQUIRED)  
 find_package(sensor_msgs REQUIRED) 
 find_package(rover_interfaces REQUIRED)
 find_package(Catch2 3 REQUIRED)
 find_package(serial REQUIRED)
-# add_executable(rover_comm src/rover_comm.cpp)
-# ament_target_dependencies(rover_comm rclcpp sensor_msgs std_msgs rover_interfaces)
 
-# add_executable(rover_comms_listener src/rover_comms_listener.cpp)
-# ament_target_dependencies(rover_comms_listener rclcpp sensor_msgs std_msgs rover_interfaces)
+add_library(new_serial STATIC src/new_serial.cpp)
+ament_target_dependencies(new_serial rclcpp std_msgs serial ament_index_cpp)
 
-add_executable(rover_comms src/main.cpp src/rover_comm.cpp src/rover_comms_listener.cpp)
-ament_target_dependencies(rover_comms rclcpp sensor_msgs std_msgs rover_interfaces)
+target_include_directories(new_serial
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CAVEHEADER_DIR}
+        ${CAVECOMMON_DIR}
+        ${JETSON_CAVE_TALK_DIR}/inc
+        ${CAVETALK_BUILD_DIR}
+        ${PROTO_DIR}
+        ${PROTOBUF_INSTALL_DIR}/include
+)
 
-add_executable(low_level_comms test/low_level_comms.cpp src/rover_comm.cpp src/rover_comms_listener.cpp)
-ament_target_dependencies(low_level_comms rclcpp sensor_msgs std_msgs rover_interfaces)
+target_link_libraries(new_serial
+        ${CAVETALK_BUILD_DIR}/libCAVeTalk-cpp.a
+        ${CAVETALK_BUILD_DIR}/libCAVeTalk-common.a
+        ${CAVETALK_BUILD_DIR}/libCAVeTalk-c.a
+        ${CAVETALK_BUILD_DIR}/libCAVeTalk-c_messages.a
+        ${CAVETALK_BUILD_DIR}/libCAVeTalk-cpp_messages.a
+        protobuf::libprotobuf
+)
 
-add_executable(high_level_comms test/high_level_comms.cpp src/rover_comm.cpp src/rover_comms_listener.cpp)
-ament_target_dependencies(high_level_comms rclcpp sensor_msgs std_msgs rover_interfaces)
+add_executable(rover_comms src/main.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+ament_target_dependencies(rover_comms rclcpp sensor_msgs std_msgs rover_interfaces serial)
 
-add_executable(ben_test test/ben_test.cpp src/rover_comm.cpp src/rover_comms_listener.cpp)
-ament_target_dependencies(ben_test rclcpp sensor_msgs std_msgs rover_interfaces)
+add_executable(low_level_comms test/low_level_comms.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+ament_target_dependencies(low_level_comms rclcpp sensor_msgs std_msgs rover_interfaces serial)
 
-add_executable(cserial test/cserial.cpp src/rover_comm.cpp src/rover_comms_listener.cpp)
+add_executable(high_level_comms test/high_level_comms.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+ament_target_dependencies(high_level_comms rclcpp sensor_msgs std_msgs rover_interfaces serial)
+
+add_executable(ben_test test/ben_test.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+ament_target_dependencies(ben_test rclcpp sensor_msgs std_msgs rover_interfaces serial)
+
+add_executable(cserial test/cserial.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
 ament_target_dependencies(cserial rclcpp sensor_msgs std_msgs rover_interfaces serial)
-
 
 set(PROTOBUF_INSTALL_DIR ${JETSON_CAVE_TALK_DIR}/CAVeTalk/external/protobuf/_build/protobuf-install)
 add_subdirectory(${CAVETALK_DIR}/external/protobuf/third_party/abseil-cpp)
 find_package(Protobuf CONFIG REQUIRED HINTS ${PROTOBUF_INSTALL_DIR})
-
-# add_library(CAVeTalk-cpp ${CAVETALK_DIR}/)
 
 target_include_directories(rover_comms 
     PUBLIC
@@ -78,6 +98,8 @@ target_link_libraries(rover_comms
         ${CAVETALK_BUILD_DIR}/libCAVeTalk-c_messages.a
         ${CAVETALK_BUILD_DIR}/libCAVeTalk-cpp_messages.a
         protobuf::libprotobuf
+        ament_index_cpp::ament_index_cpp
+        new_serial
         jetson_comms
 )
 
@@ -103,6 +125,7 @@ target_link_libraries(low_level_comms
         protobuf::libprotobuf
         jetson_comms
         Catch2::Catch2WithMain
+        new_serial
 )
 
 target_include_directories(high_level_comms 
@@ -116,6 +139,7 @@ target_include_directories(high_level_comms
         ${CATCH_DIR}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+        new_serial
 )
 
 target_link_libraries(high_level_comms 
@@ -127,6 +151,7 @@ target_link_libraries(high_level_comms
         protobuf::libprotobuf
         jetson_comms
         Catch2::Catch2WithMain
+        new_serial
 )
 
 target_include_directories(ben_test 
@@ -140,6 +165,7 @@ target_include_directories(ben_test
         ${CATCH_DIR}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+        new_serial
 )
 
 target_link_libraries(ben_test 
@@ -151,6 +177,7 @@ target_link_libraries(ben_test
         protobuf::libprotobuf
         jetson_comms
         Catch2::Catch2WithMain
+        new_serial
 )
 
 target_include_directories(cserial 
@@ -164,6 +191,7 @@ target_include_directories(cserial
         ${CATCH_DIR}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+        new_serial
 )
 
 target_link_libraries(cserial 
@@ -175,6 +203,7 @@ target_link_libraries(cserial
         protobuf::libprotobuf
         jetson_comms
         Catch2::Catch2WithMain
+        new_serial
 )
 
 # Install
@@ -185,6 +214,7 @@ install(
     high_level_comms
     ben_test
     cserial
+    new_serial
   DESTINATION lib/${PROJECT_NAME}
 )
 

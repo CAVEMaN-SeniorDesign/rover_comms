@@ -4,11 +4,12 @@
 RoverComm::RoverComm() : Node("rover_comm")
 {
     game_controller_type_ = "xbox";
+
     lights_toggle_ = false;
     
     // Create joy subscription
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
-        "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1)); // "10" is queue-size for messages, how many to queue before dropping
+        "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1));
 
     // Odom publisher
     odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Odomplot>(
@@ -17,11 +18,11 @@ RoverComm::RoverComm() : Node("rover_comm")
     // Check for connected game controllers
     std::string type = this->gameControllerType();
 
-    CaveTalk_Error_t init_error = cave_talk::init();
+    CaveTalk_Error_t init_error = new_serial::init();
 
-    while ((serial_port < 0) && (init_error != CAVE_TALK_ERROR_NONE) && looping){
+    while (!(new_serial::new_serial.isOpen()) && looping){
         RCLCPP_INFO(this->get_logger(), "UART init start error, trying again...");
-        init_error = cave_talk::init();
+        init_error = new_serial::init();
         sleep(1);
     }
 
@@ -30,7 +31,7 @@ RoverComm::RoverComm() : Node("rover_comm")
     RCLCPP_INFO(this->get_logger(), "rover_comms up on port ");
 
     speak_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(10),
+        std::chrono::milliseconds(500),
         std::bind(&RoverComm::speak_callback, this)
     );
     
@@ -43,7 +44,7 @@ RoverComm::RoverComm() : Node("rover_comm")
 
 RoverComm::~RoverComm(){
     talker->SpeakOogaBooga(cave_talk::SAY_BOOGA); // close loop by sending BOOGA
-    cave_talk::flush(); // flush buffer
+    new_serial::flush(); // flush buffer
 }
 
 std::string RoverComm::CaveTalk_ErrorToString(CaveTalk_Error_t error) {
@@ -61,6 +62,8 @@ std::string RoverComm::CaveTalk_ErrorToString(CaveTalk_Error_t error) {
     }
 }
 
+
+
 void RoverComm::listen_callback() {
     if (listener) {
         //RCLCPP_INFO(this->get_logger(), "Listening...");
@@ -72,6 +75,19 @@ void RoverComm::listen_callback() {
 }
 
 void RoverComm::speak_callback(){
+    // if(talker && first_talk_){ // only send once...
+    //     // Reset MCU in attempt to sync
+    //     talker->SpeakOogaBooga(cave_talk::SAY_BOOGA); // close loop by sending BOOGA
+    //     CaveTalk_Error_t flush_error = new_serial::flush();//clearbuffer
+    //     first_talk_ = false;
+
+    //     if(waiting_booga){ //if still waiting for booga, send more oogas
+    //         RCLCPP_INFO(this->get_logger(), "Sending Ooga, awaiting Booga...");
+    //         talker->SpeakOogaBooga(cave_talk::SAY_OOGA);
+    //     }
+        
+    // }
+
     if(talker && waiting_booga){ //if still waiting for booga, send more oogas
         RCLCPP_INFO(this->get_logger(), "Sending Ooga, awaiting Booga...");
         talker->SpeakOogaBooga(cave_talk::SAY_OOGA);
@@ -84,10 +100,23 @@ void RoverComm::speak_callback(){
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
+    if(first_talk_){
+        // Reset MCU in attempt to sync
+        talker->SpeakOogaBooga(cave_talk::SAY_BOOGA); // close loop by sending BOOGA
+        bool success = openAndSendConfig("/root/ros2_ws/src/rover_comms/src/CaveTalk_Config.xml");
+        if(success){
+            RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: True");
+        }else{
+            RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: False");
+        }
+        CaveTalk_Error_t flush_error = new_serial::flush();//clearbuffer
+        first_talk_ = false;
+    }
+
     if(talker && !(waiting_booga)){
         static bool first_log = true; // static persists between calls
 	    static bool first_log_cams = true;
-        RCLCPP_INFO(this->get_logger(), "Speaking...");
+        // RCLCPP_INFO(this->get_logger(), "Speaking...");
         //talker->SpeakOogaBooga(cave_talk::SAY_OOGA);
 
         double v = 0;
@@ -187,4 +216,144 @@ std::string RoverComm::gameControllerType(){
         }
     }
     return "powerA"; //powerA has no analog triggers, will be default case
+}
+
+// Open and send XML config file to MCU
+bool RoverComm::openAndSendConfig(std::string file){
+    
+    // std::cout << "EnteredSendConfig" << std::endl;
+    
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError error = doc.LoadFile(file.c_str());
+    // std::cout << error << std::endl;
+    if (error != tinyxml2::XML_SUCCESS) {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+
+        return false;
+    }
+
+    cave_talk::ConfigEncoder encoders[4];
+
+    double smoothing_factor;
+    double radians_per_pulse;
+    double pulses_per_period;
+    // cave_talk::EncoderMode mode;
+    int mode;
+
+    tinyxml2::XMLElement *root = doc.FirstChildElement();
+    if (root == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *config_encoder = root->FirstChildElement("ConfigEncoder");
+    if (config_encoder == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding ConfigEncoder");
+        // std::cout << "Error parsing file: Couldn't find ConfigEncoder" << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < 4; i++){
+        encoders[i] = cave_talk::ConfigEncoder();
+
+        std::string encoder_wheel_name = "Encoder_Wheel_" + std::to_string(i);
+
+        tinyxml2::XMLElement *encoder_wheel = config_encoder->FirstChildElement(encoder_wheel_name.c_str());
+        if (encoder_wheel == nullptr) {
+            RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find %s", encoder_wheel_name.c_str());
+            // std::cout << "Error parsing file: Couldnt find " << encoder_wheel_name << std::endl;
+            return false;
+        }
+
+        int extractResult = -1;
+
+        tinyxml2::XMLElement *smoothing_factor_node = encoder_wheel->FirstChildElement("smoothing_factor");
+        if (smoothing_factor_node != nullptr)
+        {
+            extractResult = smoothing_factor_node->QueryDoubleText(&smoothing_factor);
+
+            if (extractResult == 0) {
+                encoders[i].set_smoothing_factor(smoothing_factor);
+                // encoders[i].smoothing_factor = smoothing_factor;
+                RCLCPP_INFO(this->get_logger(), "Smoothing factor: %f", smoothing_factor);
+                // std::cout << smoothing_factor << std::endl;
+            }else{
+                std::cout << "Failed to extract smooth" << std::endl;
+            }
+            
+        }
+        else
+        {
+            encoders[i].set_smoothing_factor(-1);
+            // encoders[i].smoothing_factor = -1;
+        }
+
+        tinyxml2::XMLElement *radians_per_pulse_node = encoder_wheel->FirstChildElement("radians_per_pulse");
+        if(radians_per_pulse_node != nullptr)
+        {
+            extractResult = radians_per_pulse_node->QueryDoubleText(&radians_per_pulse);
+
+            if (extractResult == 0) {
+                encoders[i].set_radians_per_pulse(radians_per_pulse);
+                // encoders[i].radians_per_pulse = radians_per_pulse;
+                RCLCPP_INFO(this->get_logger(), "Radians per Pulse: %f", radians_per_pulse);
+                // std::cout << radians_per_pulse << std::endl;
+            }else {
+                std::cout << "Failed to extract rads per pulse" << std::endl;
+            }
+        }
+        else
+        {
+            encoders[i].set_radians_per_pulse(-1);
+            // encoders[i].radians_per_pulse = -1;
+        }
+
+        tinyxml2::XMLElement *pulses_per_period_node = encoder_wheel->FirstChildElement("pulses_per_period");
+        if(pulses_per_period_node != nullptr)
+        {
+            extractResult = pulses_per_period_node->QueryDoubleText(&pulses_per_period);
+
+            if(extractResult == 0)
+            {
+                encoders[i].set_pulses_per_period(pulses_per_period);
+                // encoders[i].pulses_per_period = pulses_per_period;
+                RCLCPP_INFO(this->get_logger(), "Pulses per Period: %f", pulses_per_period);
+                // std::cout << pulses_per_period << std::endl;
+            }else {
+                std::cout << "Failed to extract pulse per pd" << std::endl;
+            }
+        }
+        else
+        {
+            encoders[i].set_pulses_per_period(-1);
+            // encoders[i].pulses_per_period = -1;
+        }
+
+        tinyxml2::XMLElement *mode_node = encoder_wheel->FirstChildElement("mode");
+        if(mode_node != nullptr)
+        {
+            extractResult = mode_node->QueryIntText(&mode);
+            if(extractResult == 0)
+            {
+                encoders[i].set_mode(static_cast<cave_talk::EncoderMode>(mode));
+                // encoders[i].mode = static_cast<cave_talk_EncoderMode>(mode);
+                RCLCPP_INFO(this->get_logger(), "Mode: %d", mode);
+                // std::cout << mode << std::endl;
+            }else {
+                std::cout << "Failed to extract mode" << std::endl;
+            }
+        }
+        else
+        {
+            encoders[i].set_mode(cave_talk::EncoderMode::BSP_ENCODER_USER_MODE_PULSES_PER_ROTATON);
+            // encoders[i].mode = cave_talk_EncoderMode::cave_talk_EncoderMode_BSP_ENCODER_USER_MODE_PULSES_PER_ROTATON;
+        }
+
+    }
+
+    // roverMouth.SpeakConfigEncoder(encoders[0], encoders[1], encoders[2], encoders[3]));
+    talker->SpeakConfigEncoder(encoders[0], encoders[1], encoders[2], encoders[3]);
+    return true;
 }
