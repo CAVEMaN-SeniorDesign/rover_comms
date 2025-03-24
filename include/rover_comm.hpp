@@ -58,7 +58,8 @@ private:
     bool sendConfigs(std::string file);
     bool openAndSendConfigEncoder(std::string file);
     bool openAndSendConfigLog(std::string file);
-    bool openAndSendConfigServo(std::string file);
+    bool openAndSendConfigServoWheels(std::string file);
+    bool openAndSendConfigServoCams(std::string file);
     bool openAndSendConfigMotor(std::string file);
 
     // sub for /cmd_vel_joy topics and publish to joystick topic

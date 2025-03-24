@@ -88,7 +88,7 @@ void RoverComm::speak_callback(){
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
     if(first_talk_){
-        bool success = openAndSendConfig("/root/ros2_ws/src/rover_comms/src/CaveTalk_Config.xml");
+        bool success = sendConfigs("/root/ros2_ws/src/rover_comms/src/CaveTalk_Config.xml");
         if(success){
             RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: True");
         }else{
@@ -122,7 +122,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             v = (l_joy);
         }
 
-        if(msg->buttons[4] && (this->get_clock()->now() - last_lights_toggle_ > toggle_button_timeout_)){
+        if(msg->buttons[4] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_)){
             lights_toggle_ = !lights_toggle_; //toggle
             //MARK: add error checking
             CaveTalk_Error_t error_Lights = talker->SpeakLights(lights_toggle_);
@@ -135,7 +135,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             last_lights_toggle_ = this->get_clock()->now();
         }
 
-        if(msg->buttons[1] && (this->get_clock()->now() - last_arm_toggle_ > toggle_button_timeout_)){
+        if(msg->buttons[1] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_)){
             arm_toggle_ = !arm_toggle_; //toggle
             //MARK: add error checking
             CaveTalk_Error_t error_arm = talker->SpeakArm(arm_toggle_);
@@ -227,12 +227,9 @@ std::string RoverComm::gameControllerType(){
 bool RoverComm::sendConfigs(std::string file){
 
     bool success = true;
-    
-    bool success &= openAndSendConfigEncoder(file);
-    bool success &= openAndSendConfigLog(file);
-
+    success &= openAndSendConfigEncoder(file);
+    success &= openAndSendConfigLog(file);
     return success;
-
 }
 
 bool RoverComm::openAndSendConfigEncoder(std::string file){
@@ -387,14 +384,14 @@ bool RoverComm::openAndSendConfigLog(std::string file){
     int log_level_int;
 
     tinyxml2::XMLElement *root_xml = doc.FirstChildElement();
-    if (root == nullptr) {
+    if (root_xml == nullptr) {
         RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
         // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
         return false;
     }
 
     tinyxml2::XMLElement *config_log_xml = root_xml->FirstChildElement("ConfigLog");
-    if (config_encoder == nullptr) {
+    if (config_log_xml == nullptr) {
         RCLCPP_INFO(this->get_logger(), "Error finding ConfigLog");
         // std::cout << "Error parsing file: Couldn't find ConfigEncoder" << std::endl;
         return false;
@@ -403,7 +400,7 @@ bool RoverComm::openAndSendConfigLog(std::string file){
     int extractResult = -1;
     
     tinyxml2::XMLElement *log_level_xml = config_log_xml->FirstChildElement("log_level");
-    if (config_encoder != nullptr) {
+    if (log_level_xml != nullptr) {
         extractResult = log_level_xml->QueryIntText(&log_level_int);
 
         if(extractResult == 0){
@@ -422,137 +419,6 @@ bool RoverComm::openAndSendConfigLog(std::string file){
 
 }
 
-bool RoverComm::openAndSendConfigServoWheels(std::string file){
-    tinyxml2::XMLDocument doc;
-    tinyxml2::XMLError error = doc.LoadFile(file.c_str());
-    // std::cout << error << std::endl;
-    if (error != tinyxml2::XML_SUCCESS) {
-        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
-        // std::cout << "Open File Error" << std::endl;
-        return false;
-    }
-
-    cave_talk::Servo servo_wheels[4];
-    double min_angle_radian;
-    double max_angle_radian;
-    double center_angle_radian;
-    double min_duty_cycle_us;
-    double max_duty_cycle_us;
-    double center_duty_cycle_us;
-
-    tinyxml2::XMLElement *root = doc.FirstChildElement();
-    if (root == nullptr) {
-        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
-        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
-        return false;
-    }
-
-    tinyxml2::XMLElement *config_servo_wheels = root->FirstChildElement("ConfigServoWheels");
-    if (config_servo_wheels == nullptr) {
-        RCLCPP_INFO(this->get_logger(), "Error finding ConfigServoWheels");
-        // std::cout << "Error parsing file: Couldn't find ConfigServoWheels" << std::endl;
-        return false;
-    }
-
-    for(int i = 0; i < 4; i++){
-        servo_wheels[i] = cave_talk::Servo();
-
-        std::string servo_wheel_name = "Servo_Wheel_" + std::to_string(i);
-
-        tinyxml2::XMLElement *servo_wheel = config_servo_wheels->FirstChildElement(servo_wheel_name.c_str());
-        if (encoder_wheel == nullptr) {
-            RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find %s", servo_wheel_name.c_str());
-            // std::cout << "Error parsing file: Couldnt find " << servo_wheel_name << std::endl;
-            return false;
-        }
-
-        int extractResult = -1;
-
-        tinyxml2::XMLElement *smoothing_factor_node = encoder_wheel->FirstChildElement("smoothing_factor");
-        if (smoothing_factor_node != nullptr)
-        {
-            extractResult = smoothing_factor_node->QueryDoubleText(&smoothing_factor);
-
-            if (extractResult == 0) {
-                servo_wheels[i].set_smoothing_factor(smoothing_factor);
-                // servo_wheels[i].smoothing_factor = smoothing_factor;
-                RCLCPP_INFO(this->get_logger(), "Smoothing factor: %f", smoothing_factor);
-                // std::cout << smoothing_factor << std::endl;
-            }else{
-                std::cout << "Failed to extract smooth" << std::endl;
-            }
-            
-        }
-        else
-        {
-            servo_wheels[i].set_smoothing_factor(-1);
-            // servo_wheels[i].smoothing_factor = -1;
-        }
-
-        tinyxml2::XMLElement *radians_per_pulse_node = encoder_wheel->FirstChildElement("radians_per_pulse");
-        if(radians_per_pulse_node != nullptr)
-        {
-            extractResult = radians_per_pulse_node->QueryDoubleText(&radians_per_pulse);
-
-            if (extractResult == 0) {
-                servo_wheels[i].set_radians_per_pulse(radians_per_pulse);
-                // servo_wheels[i].radians_per_pulse = radians_per_pulse;
-                RCLCPP_INFO(this->get_logger(), "Radians per Pulse: %f", radians_per_pulse);
-                // std::cout << radians_per_pulse << std::endl;
-            }else {
-                std::cout << "Failed to extract rads per pulse" << std::endl;
-            }
-        }
-        else
-        {
-            servo_wheels[i].set_radians_per_pulse(-1);
-            // servo_wheels[i].radians_per_pulse = -1;
-        }
-
-        tinyxml2::XMLElement *pulses_per_period_node = encoder_wheel->FirstChildElement("pulses_per_period");
-        if(pulses_per_period_node != nullptr)
-        {
-            extractResult = pulses_per_period_node->QueryDoubleText(&pulses_per_period);
-
-            if(extractResult == 0)
-            {
-                servo_wheels[i].set_pulses_per_period(pulses_per_period);
-                // servo_wheels[i].pulses_per_period = pulses_per_period;
-                RCLCPP_INFO(this->get_logger(), "Pulses per Period: %f", pulses_per_period);
-                // std::cout << pulses_per_period << std::endl;
-            }else {
-                std::cout << "Failed to extract pulse per pd" << std::endl;
-            }
-        }
-        else
-        {
-            servo_wheels[i].set_pulses_per_period(-1);
-            // servo_wheels[i].pulses_per_period = -1;
-        }
-
-        tinyxml2::XMLElement *mode_node = encoder_wheel->FirstChildElement("mode");
-        if(mode_node != nullptr)
-        {
-            extractResult = mode_node->QueryIntText(&mode);
-            if(extractResult == 0)
-            {
-                encoders[i].set_mode(static_cast<cave_talk::EncoderMode>(mode));
-                // encoders[i].mode = static_cast<cave_talk_EncoderMode>(mode);
-                RCLCPP_INFO(this->get_logger(), "Mode: %d", mode);
-                // std::cout << mode << std::endl;
-            }else {
-                std::cout << "Failed to extract mode" << std::endl;
-            }
-        }
-        else
-        {
-            encoders[i].set_mode(cave_talk::EncoderMode::BSP_ENCODER_USER_MODE_PULSES_PER_ROTATON);
-            // encoders[i].mode = cave_talk_EncoderMode::cave_talk_EncoderMode_BSP_ENCODER_USER_MODE_PULSES_PER_ROTATON;
-        }
-    }
-
-    // roverMouth.SpeakConfigEncoder(encoders[0], encoders[1], encoders[2], encoders[3]));
-    talker->SpeakConfigEncoder(encoders[0], encoders[1], encoders[2], encoders[3]);
-    return true;
-}
-bool RoverComm::openAndSendConfigMotor(std::string file){}
+bool openAndSendConfigServoWheels(std::string file){}
+bool openAndSendConfigServoCams(std::string file){}
+bool openAndSendConfigMotor(std::string file){}

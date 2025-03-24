@@ -3,7 +3,7 @@
 
 namespace new_serial{
     // default parameters, overwritten by the settings in src/Serial_Config.xml
-    std::string port = "/dev/ttyTHS1"; 
+    std::string port = "/dev/ttyUSB0"; 
     unsigned long baud = 1000000; 
     serial::Serial new_serial;
     serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
