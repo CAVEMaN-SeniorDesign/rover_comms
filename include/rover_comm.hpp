@@ -55,7 +55,11 @@ private:
     void listen_callback();
     void speak_callback();
     std::string gameControllerType();
-    bool openAndSendConfig(std::string file);
+    bool sendConfigs(std::string file);
+    bool openAndSendConfigEncoder(std::string file);
+    bool openAndSendConfigLog(std::string file);
+    bool openAndSendConfigServo(std::string file);
+    bool openAndSendConfigMotor(std::string file);
 
     // sub for /cmd_vel_joy topics and publish to joystick topic
     rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
@@ -68,7 +72,13 @@ private:
     double prev_cam_pan_;
     double prev_cam_tilt_;
     bool lights_toggle_; 
+    bool arm_toggle_;
     bool first_talk_; // bool to assist syncing with MCU
+
+    // button sw-debouncing with a .5sec timeout
+    rclcpp::Time last_lights_toggle_ = this->get_clock()->now();
+    rclcpp::Time last_arm_toggle_ = this->get_clock()->now();
+    double toggle_button_timeout_ = 0.5; // half-second time-out
 
     // // serial params, can be modified in rover_comms/src/Serial_Config.xml
     // std:string serial_port_ = "/dev/ttyTHS1";

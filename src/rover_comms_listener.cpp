@@ -23,7 +23,6 @@ void RoverCommsListener::HearOogaBooga(const cave_talk::Say ooga_booga)
         }
     }
     else if (ooga_booga==cave_talk::SAY_BOOGA){
-        // (rover_comm_node_->talker)->SpeakOogaBooga(cave_talk::SAY_OOGA);
         rover_comm_node_->waiting_booga = false;
         // if(rover_comm_node_->speak_timer_){
         //     rover_comm_node_->speak_timer_->cancel(); // stops timer callbacks
@@ -70,6 +69,11 @@ void RoverCommsListener::HearConfigServoCams(const cave_talk::Servo &servo_cam_p
 void RoverCommsListener::HearConfigMotor(const cave_talk::Motor &motor_wheel_0, const cave_talk::Motor &motor_wheel_1, const cave_talk::Motor &motor_wheel_2, const cave_talk::Motor &motor_wheel_3)
 {
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Hear config motor not impl.");
+}
+
+void RoverCommsListener::HearConfigLog(const cave_talk::LogLevel log_level)
+{
+    RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard log_level");
 }
 
 void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk::Encoder &encoder_wheel_0, const cave_talk::Encoder &encoder_wheel_1, const cave_talk::Encoder &encoder_wheel_2, const cave_talk::Encoder &encoder_wheel_3)
