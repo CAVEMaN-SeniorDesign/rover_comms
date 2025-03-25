@@ -74,6 +74,10 @@ private:
     double prev_cam_tilt_ = 0;
     double cam_pan_ = 1.5707963;
     double cam_tilt_ = 1.5707963;
+    double min_cam_pan_radian_ = 0;
+    double max_cam_pan_radian_ = 6.2831853;
+    double min_cam_tilt_radian_ = 0;
+    double max_cam_tilt_radian_ = 6.2831853;
     bool lights_toggle_; 
     bool arm_toggle_;
     bool first_talk_; // bool to assist syncing with MCU

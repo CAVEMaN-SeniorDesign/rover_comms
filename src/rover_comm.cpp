@@ -115,6 +115,20 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             //up-down is msg->axes[7], up is +
             cam_pan_ += ((msg->axes[6])*3.1415926/32.0);
             cam_tilt_ += ((msg->axes[7])*3.1415926/32.0);
+
+            if(cam_pan_ < min_cam_pan_radian_){
+                cam_pan_ = min_cam_pan_radian_;
+            }
+            else if(cam_pan_ > max_cam_pan_radian_){
+                cam_pan_ = max_cam_pan_radian_;
+            }
+
+            if(cam_tilt_ < min_cam_tilt_radian_){
+                cam_tilt_ = min_cam_tilt_radian_;
+            }
+            else if(cam_tilt_ > max_cam_tilt_radian_){
+                cam_tilt_ = max_cam_tilt_radian_;
+            }
             v = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
         }
         else{
@@ -647,6 +661,12 @@ bool RoverComm::openAndSendConfigServoCams(std::string file){
             }else{
                 std::cout << "Failed to extract min angle radian" << std::endl;
             } 
+
+            if(i == 0){
+                min_cam_pan_radian_ = min_angle_radian;
+            }else{
+                min_cam_tilt_radian_ = min_angle_radian;
+            }
         }
         else
         {
@@ -665,6 +685,12 @@ bool RoverComm::openAndSendConfigServoCams(std::string file){
             }else{
                 std::cout << "Failed to extract max angle radian" << std::endl;
             } 
+
+            if(i == 0){
+                max_cam_pan_radian_ = max_angle_radian;
+            }else{
+                max_cam_tilt_radian_ = max_angle_radian;
+            }
         }
         else
         {
