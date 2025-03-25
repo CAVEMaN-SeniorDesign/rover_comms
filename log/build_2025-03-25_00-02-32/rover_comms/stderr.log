@@ -1,0 +1,42 @@
+[0mCMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+[0m
+[33mCMake Warning (dev) at /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/python.cmake:22 (find_package):
+  Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+  are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+  the cmake_policy command to set the policy and suppress this warning.
+
+Call Stack (most recent call first):
+  /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/all.cmake:53 (include)
+  /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_core-extras.cmake:17 (include)
+  /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_coreConfig.cmake:41 (include)
+  /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmake_export_dependencies-extras.cmake:15 (find_package)
+  /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmakeConfig.cmake:41 (include)
+  CMakeLists.txt:31 (find_package)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+[0m
+[33mCMake Warning at Jetson-Comms/CAVeTalk/external/protobuf/third_party/abseil-cpp/CMakeLists.txt:82 (message):
+  A future Abseil release will default ABSL_PROPAGATE_CXX_STD to ON for CMake
+  3.8 and up.  We recommend enabling this option to ensure your project still
+  builds correctly.
+
+[0m
+[31mCMake Error at CMakeLists.txt:80 (find_package):
+  Found package configuration file:
+
+    /root/ros2_ws/src/rover_comms/Jetson-Comms/CAVeTalk/external/protobuf/_build/protobuf-install/lib/cmake/protobuf/protobuf-config.cmake
+
+  but it set Protobuf_FOUND to FALSE so package "Protobuf" is considered to
+  be NOT FOUND.  Reason given by package:
+
+  The following imported targets are referenced, but are missing:
+  utf8_range::utf8_validity utf8_range::utf8_range
+
+
+[0m

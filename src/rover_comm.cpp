@@ -467,6 +467,24 @@ bool RoverComm::openAndSendConfigServoWheels(std::string file){
 
         int extractResult = -1;
 
+        tinyxml2::XMLElement *min_angle_radian_node = servo_wheel->FirstChildElement("min_angle_radian");
+        if (min_angle_radian_node != nullptr)
+        {
+            extractResult = min_angle_radian_node->QueryDoubleText(&min_angle_radian);
+
+            if (extractResult == 0) {
+                servo_wheels[i].set_min_angle_radian(min_angle_radian);
+                RCLCPP_INFO(this->get_logger(), "min Angle Radian: %f", min_angle_radian);
+                // std::cout << min_angle_radian << std::endl;
+            }else{
+                std::cout << "Failed to extract min angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            servo_wheels[i].set_min_angle_radian(-1);
+        }
+
         tinyxml2::XMLElement *max_angle_radian_node = servo_wheel->FirstChildElement("max_angle_radian");
         if (max_angle_radian_node != nullptr)
         {
@@ -527,7 +545,7 @@ bool RoverComm::openAndSendConfigServoWheels(std::string file){
             extractResult = max_duty_cycle_microsec_node->QueryDoubleText(&max_duty_cycle_microsec);
 
             if (extractResult == 0) {
-                servo_wheels[i].set_max_duty_cycle_microsec(max_duty_cycle_microsec);
+                servo_wheels[i].set_max_duty_cycle_microseconds(max_duty_cycle_microsec);
                 RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", max_duty_cycle_microsec);
                 // std::cout << max_duty_cycle_microsec << std::endl;
             }else{
@@ -536,7 +554,7 @@ bool RoverComm::openAndSendConfigServoWheels(std::string file){
         }
         else
         {
-            servo_wheels[i].set_max_duty_cycle_microsec(-1);
+            servo_wheels[i].set_max_duty_cycle_microseconds(-1);
         }
 
         tinyxml2::XMLElement *center_duty_cycle_microsec_node = servo_wheel->FirstChildElement("center_duty_cycle_microsec");
@@ -545,7 +563,7 @@ bool RoverComm::openAndSendConfigServoWheels(std::string file){
             extractResult = center_duty_cycle_microsec_node->QueryDoubleText(&center_duty_cycle_microsec);
 
             if (extractResult == 0) {
-                servo_wheels[i].set_center_duty_cycle_microsec(center_duty_cycle_microsec);
+                servo_wheels[i].set_center_duty_cycle_microseconds(center_duty_cycle_microsec);
                 RCLCPP_INFO(this->get_logger(), "center Angle Radian: %f", center_duty_cycle_microsec);
                 // std::cout << center_duty_cycle_microsec << std::endl;
             }else{
@@ -554,7 +572,7 @@ bool RoverComm::openAndSendConfigServoWheels(std::string file){
         }
         else
         {
-            servo_wheels[i].set_center_duty_cycle_microsec(-1);
+            servo_wheels[i].set_center_duty_cycle_microseconds(-1);
         }
     }
 
@@ -562,5 +580,307 @@ bool RoverComm::openAndSendConfigServoWheels(std::string file){
     return true;
 }
 
-bool RoverComm::openAndSendConfigServoCams(std::string file){}
-bool RoverComm::openAndSendConfigMotor(std::string file){}
+bool RoverComm::openAndSendConfigServoCams(std::string file){
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError error = doc.LoadFile(file.c_str());
+    // std::cout << error << std::endl;
+    if (error != tinyxml2::XML_SUCCESS) {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    cave_talk::Servo servo_cams[2];
+    double min_angle_radian;
+    double max_angle_radian;
+    double center_angle_radian;
+    double min_duty_cycle_microsec;
+    double max_duty_cycle_microsec;
+    double center_duty_cycle_microsec;
+
+    tinyxml2::XMLElement *root = doc.FirstChildElement();
+    if (root == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *config_servo_cams = root->FirstChildElement("ConfigServoCams");
+    if (config_servo_cams == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding ConfigServoCams");
+        // std::cout << "Error parsing file: Couldn't find ConfigServoCams" << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < 2; i++){
+        servo_cams[i] = cave_talk::Servo();
+
+        std::string servo_cams_name = "Servo_Cam_";
+        if(i == 0){
+            servo_cams_name += "Pan";
+        }else{
+            servo_cams_name += "Tilt";
+        }
+
+        tinyxml2::XMLElement *servo_cams_xml = config_servo_cams->FirstChildElement(servo_cams_name.c_str());
+        if (servo_cams_xml == nullptr) {
+            RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find %s", servo_cams_name.c_str());
+            // std::cout << "Error parsing file: Couldnt find " << servo_cams_name << std::endl;
+            return false;
+        }
+
+        int extractResult = -1;
+
+        tinyxml2::XMLElement *min_angle_radian_node = servo_cams_xml->FirstChildElement("min_angle_radian");
+        if (min_angle_radian_node != nullptr)
+        {
+            extractResult = min_angle_radian_node->QueryDoubleText(&min_angle_radian);
+
+            if (extractResult == 0) {
+                servo_cams[i].set_min_angle_radian(min_angle_radian);
+                RCLCPP_INFO(this->get_logger(), "min Angle Radian: %f", min_angle_radian);
+                // std::cout << min_angle_radian << std::endl;
+            }else{
+                std::cout << "Failed to extract min angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            servo_cams[i].set_min_angle_radian(-1);
+        }
+
+        tinyxml2::XMLElement *max_angle_radian_node = servo_cams_xml->FirstChildElement("max_angle_radian");
+        if (max_angle_radian_node != nullptr)
+        {
+            extractResult = max_angle_radian_node->QueryDoubleText(&max_angle_radian);
+
+            if (extractResult == 0) {
+                servo_cams[i].set_max_angle_radian(max_angle_radian);
+                RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", max_angle_radian);
+                // std::cout << max_angle_radian << std::endl;
+            }else{
+                std::cout << "Failed to extract max angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            servo_cams[i].set_max_angle_radian(-1);
+        }
+
+        tinyxml2::XMLElement *center_angle_radian_node = servo_cams_xml->FirstChildElement("center_angle_radian");
+        if (center_angle_radian_node != nullptr)
+        {
+            extractResult = center_angle_radian_node->QueryDoubleText(&center_angle_radian);
+
+            if (extractResult == 0) {
+                servo_cams[i].set_center_angle_radian(center_angle_radian);
+                RCLCPP_INFO(this->get_logger(), "center Angle Radian: %f", center_angle_radian);
+                // std::cout << center_angle_radian << std::endl;
+            }else{
+                std::cout << "Failed to extract center angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            servo_cams[i].set_center_angle_radian(-1);
+        }
+
+        tinyxml2::XMLElement *min_duty_cycle_microsec_node = servo_cams_xml->FirstChildElement("min_duty_cycle_microsec");
+        if (min_duty_cycle_microsec_node != nullptr)
+        {
+            extractResult = min_duty_cycle_microsec_node->QueryDoubleText(&min_duty_cycle_microsec);
+
+            if (extractResult == 0) {
+                servo_cams[i].set_min_duty_cycle_microseconds(min_duty_cycle_microsec);
+                RCLCPP_INFO(this->get_logger(), "Min Angle Radian: %f", min_duty_cycle_microsec);
+                // std::cout << min_duty_cycle_microsec << std::endl;
+            }else{
+                std::cout << "Failed to extract min angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            servo_cams[i].set_min_duty_cycle_microseconds(-1);
+        }
+
+        tinyxml2::XMLElement *max_duty_cycle_microsec_node = servo_cams_xml->FirstChildElement("max_duty_cycle_microsec");
+        if (max_duty_cycle_microsec_node != nullptr)
+        {
+            extractResult = max_duty_cycle_microsec_node->QueryDoubleText(&max_duty_cycle_microsec);
+
+            if (extractResult == 0) {
+                servo_cams[i].set_max_duty_cycle_microseconds(max_duty_cycle_microsec);
+                RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", max_duty_cycle_microsec);
+                // std::cout << max_duty_cycle_microsec << std::endl;
+            }else{
+                std::cout << "Failed to extract max angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            servo_cams[i].set_max_duty_cycle_microseconds(-1);
+        }
+
+        tinyxml2::XMLElement *center_duty_cycle_microsec_node = servo_cams_xml->FirstChildElement("center_duty_cycle_microsec");
+        if (center_duty_cycle_microsec_node != nullptr)
+        {
+            extractResult = center_duty_cycle_microsec_node->QueryDoubleText(&center_duty_cycle_microsec);
+
+            if (extractResult == 0) {
+                servo_cams[i].set_center_duty_cycle_microseconds(center_duty_cycle_microsec);
+                RCLCPP_INFO(this->get_logger(), "center Angle Radian: %f", center_duty_cycle_microsec);
+                // std::cout << center_duty_cycle_microsec << std::endl;
+            }else{
+                std::cout << "Failed to extract center angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            servo_cams[i].set_center_duty_cycle_microseconds(-1);
+        }
+    }
+
+    talker->SpeakConfigServoCams(servo_cams[0], servo_cams[1]);
+    return true;
+}
+bool RoverComm::openAndSendConfigMotor(std::string file){
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError error = doc.LoadFile(file.c_str());
+    // std::cout << error << std::endl;
+    if (error != tinyxml2::XML_SUCCESS) {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    cave_talk::Motor motor_wheels[4];
+    double pwm_carrier_freq_hz;
+    double min_speed_loaded_mps;
+    double max_speed_loaded_mps;
+    double min_duty_cycle_percent;
+    double max_duty_cycle_percent;
+
+    tinyxml2::XMLElement *root = doc.FirstChildElement();
+    if (root == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *config_motor = root->FirstChildElement("ConfigMotor");
+    if (config_motor == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding ConfigMotor");
+        // std::cout << "Error parsing file: Couldn't find ConfigMotor" << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < 4; i++){
+        motor_wheels[i] = cave_talk::Motor();
+
+        std::string motor_wheel_name = "Motor_Wheel_" + std::to_string(i);
+
+        tinyxml2::XMLElement *motor_wheel = config_motor->FirstChildElement(motor_wheel_name.c_str());
+        if (motor_wheel == nullptr) {
+            RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find %s", motor_wheel_name.c_str());
+            // std::cout << "Error parsing file: Couldnt find " << motor_wheel_name << std::endl;
+            return false;
+        }
+
+        int extractResult = -1;
+
+        tinyxml2::XMLElement *pwm_freq_node = motor_wheel->FirstChildElement("min_angle_radian");
+        if (pwm_freq_node != nullptr)
+        {
+            extractResult = pwm_freq_node->QueryDoubleText(&pwm_carrier_freq_hz);
+
+            if (extractResult == 0) {
+                motor_wheels[i].set_pwm_carrier_freq_hz(pwm_carrier_freq_hz);
+                RCLCPP_INFO(this->get_logger(), "min Angle Radian: %f", pwm_carrier_freq_hz);
+                // std::cout << pwm_carrier_freq_hz << std::endl;
+            }else{
+                std::cout << "Failed to extract min angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            motor_wheels[i].set_pwm_carrier_freq_hz(-1);
+        }
+
+        tinyxml2::XMLElement *max_speed_loaded_mps_node = motor_wheel->FirstChildElement("max_speed_loaded_mps");
+        if (max_speed_loaded_mps_node != nullptr)
+        {
+            extractResult = max_speed_loaded_mps_node->QueryDoubleText(&max_speed_loaded_mps);
+
+            if (extractResult == 0) {
+                motor_wheels[i].set_max_speed_loaded_meters_per_second(max_speed_loaded_mps);
+                RCLCPP_INFO(this->get_logger(), "max speed loaded meters per second: %f", max_speed_loaded_mps);
+                // std::cout << max_speed_loaded_mps << std::endl;
+            }else{
+                std::cout << "Failed to extract max speed loaded meters per second" << std::endl;
+            } 
+        }
+        else
+        {
+            motor_wheels[i].set_max_speed_loaded_meters_per_second(-1);
+        }
+
+        tinyxml2::XMLElement *min_speed_loaded_mps_node = motor_wheel->FirstChildElement("min_speed_loaded_mps");
+        if (min_speed_loaded_mps_node != nullptr)
+        {
+            extractResult = min_speed_loaded_mps_node->QueryDoubleText(&min_speed_loaded_mps);
+
+            if (extractResult == 0) {
+                motor_wheels[i].set_min_speed_loaded_meters_per_second(min_speed_loaded_mps);
+                RCLCPP_INFO(this->get_logger(), "min speed loaded m/s: %f", min_speed_loaded_mps);
+                // std::cout << min_speed_loaded_mps << std::endl;
+            }else{
+                std::cout << "Failed to extract min speed loaded m/s" << std::endl;
+            } 
+        }
+        else
+        {
+            motor_wheels[i].set_min_speed_loaded_meters_per_second(-1);
+        }
+
+        tinyxml2::XMLElement *min_duty_cycle_percent_node = motor_wheel->FirstChildElement("min_duty_cycle_percent");
+        if (min_duty_cycle_percent_node != nullptr)
+        {
+            extractResult = min_duty_cycle_percent_node->QueryDoubleText(&min_duty_cycle_percent);
+
+            if (extractResult == 0) {
+                motor_wheels[i].set_min_duty_cycle_percentage(min_duty_cycle_percent);
+                RCLCPP_INFO(this->get_logger(), "Min Angle Radian: %f", min_duty_cycle_percent);
+                // std::cout << min_duty_cycle_percent << std::endl;
+            }else{
+                std::cout << "Failed to extract min angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            motor_wheels[i].set_min_duty_cycle_percentage(-1);
+        }
+
+        tinyxml2::XMLElement *max_duty_cycle_percent_node = motor_wheel->FirstChildElement("max_duty_cycle_percent");
+        if (max_duty_cycle_percent_node != nullptr)
+        {
+            extractResult = max_duty_cycle_percent_node->QueryDoubleText(&max_duty_cycle_percent);
+
+            if (extractResult == 0) {
+                motor_wheels[i].set_max_duty_cycle_percentage(max_duty_cycle_percent);
+                RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", max_duty_cycle_percent);
+                // std::cout << max_duty_cycle_percent << std::endl;
+            }else{
+                std::cout << "Failed to extract max angle radian" << std::endl;
+            } 
+        }
+        else
+        {
+            motor_wheels[i].set_max_duty_cycle_percentage(-1);
+        }
+
+        
+    }
+
+    talker->SpeakConfigMotor(motor_wheels[0], motor_wheels[1], motor_wheels[2], motor_wheels[3]);
+    return true;
+}

@@ -1,0 +1,85 @@
+[0.550s] Invoking command in '/root/ros2_ws/src/rover_comms/build/rover_comms': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/root/ros2_ws/install/rqt_plot:/root/ros2_ws/install/ros2controlcli VIRTUAL_ENV_PROMPT=(py311venv) /usr/local/bin/cmake /root/ros2_ws/src/rover_comms -DCMAKE_INSTALL_PREFIX=/root/ros2_ws/src/rover_comms/install/rover_comms
+[0.895s] [0mCMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+[0.897s]   Compatibility with CMake < 3.10 will be removed from a future version of
+[0.898s]   CMake.
+[0.902s] 
+[0.904s]   Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+[0.906s]   to tell CMake that the project requires at least <min> but has been updated
+[0.908s]   to work with policies introduced by <max> or earlier.
+[0.910s] 
+[0.912s] [0m
+[2.899s] -- The C compiler identification is GNU 9.4.0
+[4.788s] -- The CXX compiler identification is GNU 9.4.0
+[5.164s] -- Detecting C compiler ABI info
+[8.369s] -- Detecting C compiler ABI info - done
+[8.713s] -- Check for working C compiler: /usr/bin/cc - skipped
+[8.727s] -- Detecting C compile features
+[8.745s] -- Detecting C compile features - done
+[9.126s] -- Detecting CXX compiler ABI info
+[12.087s] -- Detecting CXX compiler ABI info - done
+[12.399s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[12.403s] -- Detecting CXX compile features
+[12.415s] -- Detecting CXX compile features - done
+[12.718s] -- Found ament_cmake: 0.9.12 (/opt/ros/foxy/install/share/ament_cmake/cmake)
+[12.832s] [33mCMake Warning (dev) at /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/python.cmake:22 (find_package):
+[12.834s]   Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+[12.836s]   are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+[12.837s]   the cmake_policy command to set the policy and suppress this warning.
+[12.838s] 
+[12.839s] Call Stack (most recent call first):
+[12.840s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/all.cmake:53 (include)
+[12.841s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_core-extras.cmake:17 (include)
+[12.843s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_coreConfig.cmake:41 (include)
+[12.844s]   /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmake_export_dependencies-extras.cmake:15 (find_package)
+[12.845s]   /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmakeConfig.cmake:41 (include)
+[12.846s]   CMakeLists.txt:31 (find_package)
+[12.848s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[12.849s] [0m
+[13.616s] -- Found PythonInterp: /root/py311venv/bin/python3 (found suitable version "3.11.11", minimum required is "3")
+[13.621s] -- Using PYTHON_EXECUTABLE: /root/py311venv/bin/python3
+[18.170s] -- Found ament_index_cpp: 1.1.0 (/opt/ros/foxy/install/share/ament_index_cpp/cmake)
+[18.272s] -- Found rclcpp: 2.4.3 (/opt/ros/foxy/install/share/rclcpp/cmake)
+[19.113s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[19.254s] -- Found rosidl_adapter: 1.3.1 (/opt/ros/foxy/install/share/rosidl_adapter/cmake)
+[21.796s] -- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "1.1.1")
+[21.992s] -- Found FastRTPS: /opt/ros/foxy/install/include
+[23.118s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[24.057s] -- Found rmw_implementation_cmake: 1.0.4 (/opt/ros/foxy/install/share/rmw_implementation_cmake/cmake)
+[24.099s] -- Using RMW implementation 'rmw_cyclonedds_cpp' as default
+[24.108s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[27.188s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+[27.194s] -- Looking for pthread_create in pthreads
+[30.229s] -- Looking for pthread_create in pthreads - not found
+[30.230s] -- Looking for pthread_create in pthread
+[33.400s] -- Looking for pthread_create in pthread - found
+[33.414s] -- Found Threads: TRUE
+[35.738s] -- Found sensor_msgs: 2.0.5 (/opt/ros/foxy/install/share/sensor_msgs/cmake)
+[37.142s] -- Found rover_interfaces: 0.0.0 (/root/ros2_ws/install/rover_interfaces/share/rover_interfaces/cmake)
+[37.301s] -- Found serial: 1.2.1 (/root/ros2_ws/install/serial/share/serial/cmake)
+[37.598s] [33mCMake Warning at Jetson-Comms/CAVeTalk/external/protobuf/third_party/abseil-cpp/CMakeLists.txt:82 (message):
+[37.599s]   A future Abseil release will default ABSL_PROPAGATE_CXX_STD to ON for CMake
+[37.600s]   3.8 and up.  We recommend enabling this option to ensure your project still
+[37.601s]   builds correctly.
+[37.602s] 
+[37.603s] [0m
+[37.675s] -- Performing Test ABSL_INTERNAL_AT_LEAST_CXX17
+[39.355s] -- Performing Test ABSL_INTERNAL_AT_LEAST_CXX17 - Failed
+[39.359s] -- Performing Test ABSL_INTERNAL_AT_LEAST_CXX20
+[40.920s] -- Performing Test ABSL_INTERNAL_AT_LEAST_CXX20 - Failed
+[41.915s] -- Found ZLIB: /usr/lib/aarch64-linux-gnu/libz.so (found version "1.2.11")
+[41.982s] -- Could NOT find utf8_range (missing: utf8_range_DIR)
+[41.998s] [31mCMake Error at CMakeLists.txt:80 (find_package):
+[41.999s]   Found package configuration file:
+[42.000s] 
+[42.002s]     /root/ros2_ws/src/rover_comms/Jetson-Comms/CAVeTalk/external/protobuf/_build/protobuf-install/lib/cmake/protobuf/protobuf-config.cmake
+[42.003s] 
+[42.004s]   but it set Protobuf_FOUND to FALSE so package "Protobuf" is considered to
+[42.005s]   be NOT FOUND.  Reason given by package:
+[42.007s] 
+[42.008s]   The following imported targets are referenced, but are missing:
+[42.010s]   utf8_range::utf8_validity utf8_range::utf8_range
+[42.012s] 
+[42.014s] 
+[42.016s] [0m
+[42.018s] -- Configuring incomplete, errors occurred!
+[42.078s] Invoked command in '/root/ros2_ws/src/rover_comms/build/rover_comms' returned '1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/root/ros2_ws/install/rqt_plot:/root/ros2_ws/install/ros2controlcli VIRTUAL_ENV_PROMPT=(py311venv) /usr/local/bin/cmake /root/ros2_ws/src/rover_comms -DCMAKE_INSTALL_PREFIX=/root/ros2_ws/src/rover_comms/install/rover_comms
