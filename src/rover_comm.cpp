@@ -104,16 +104,17 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
         double v = 0;
         double omega = 0;
-        double cam_pan = 0;
-        double cam_tilt = 0;
 
         if(this->game_controller_type_=="xbox"){
             // invert the values
             double r_trig = -msg->axes[4] + 1; // Default unpressed is 1.0, down to -1 fully pressed
             double l_trig = -msg->axes[5] + 1; //
             omega = msg->axes[0]; // Angular velocity on joy 0
-            cam_pan = ((msg->axes[2]*-1.0)+1)*3.1415926/2.0;
-            cam_tilt = (msg->axes[3]+1)*3.1415926/2.0;
+
+            //left-rght is msg->axes[6], left is +
+            //up-down is msg->axes[7], up is +
+            cam_pan_ += ((msg->axes[6])*3.1415926/32.0);
+            cam_tilt_ += ((msg->axes[7])*3.1415926/32.0);
             v = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
         }
         else{
@@ -173,16 +174,16 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             prev_omega_ = omega;
         }
 
-        if (first_log_cams || (cam_pan != prev_cam_pan_ || cam_tilt != prev_cam_tilt_)) {
+        if (first_log_cams || (cam_pan_ != prev_cam_pan_ || cam_tilt_ != prev_cam_tilt_)) {
             first_log_cams = false;
 
-            std::string cmd_cam_msg = "Cam_Pan: "  + std::to_string(cam_pan) + ", Cam_Tilt: " + std::to_string(cam_tilt);
+            std::string cmd_cam_msg = "Cam_Pan: "  + std::to_string(cam_pan_) + ", Cam_Tilt: " + std::to_string(cam_tilt_);
             //MARK: add error checking
-            talker->SpeakCameraMovement(cam_pan, cam_tilt);
+            talker->SpeakCameraMovement(cam_pan_, cam_tilt_);
             RCLCPP_INFO(this->get_logger(), cmd_cam_msg);
 
-            prev_cam_pan_ = cam_pan;
-            prev_cam_tilt_ = cam_tilt;
+            prev_cam_pan_ = cam_pan_;
+            prev_cam_tilt_ = cam_tilt_;
         }
 
         // std::string command_vel_msg = "Linear_Vel: " + std::to_string(v) + ", Angular Vel: " + std::to_string(omega);
@@ -230,6 +231,9 @@ bool RoverComm::sendConfigs(std::string file){
     
     success &= openAndSendConfigEncoder(file);
     success &= openAndSendConfigLog(file);
+    success &= openAndSendConfigServoWheels(file);
+    success &= openAndSendConfigServoCams(file);
+    success &= openAndSendConfigMotor(file);
 
     return success;
 }
@@ -679,6 +683,12 @@ bool RoverComm::openAndSendConfigServoCams(std::string file){
             }else{
                 std::cout << "Failed to extract center angle radian" << std::endl;
             } 
+
+            if(i == 0){
+                cam_pan_ = center_angle_radian;
+            }else{
+                cam_tilt_ = center_angle_radian;
+            }
         }
         else
         {

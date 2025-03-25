@@ -70,8 +70,10 @@ private:
     std::string game_controller_type_;
     double prev_v_;
     double prev_omega_;
-    double prev_cam_pan_;
-    double prev_cam_tilt_;
+    double prev_cam_pan_ = 0;
+    double prev_cam_tilt_ = 0;
+    double cam_pan_ = 1.5707963;
+    double cam_tilt_ = 1.5707963;
     bool lights_toggle_; 
     bool arm_toggle_;
     bool first_talk_; // bool to assist syncing with MCU
