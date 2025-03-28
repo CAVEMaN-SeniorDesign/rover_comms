@@ -2,7 +2,6 @@
 #define ROVER_COMM_HPP
 
 #include "rclcpp/rclcpp.hpp"
-#include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "rover_interfaces/msg/serial.hpp"
