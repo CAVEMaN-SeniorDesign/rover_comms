@@ -1,4 +1,4 @@
 [submodule "Jetson-Comms"]
 	path = Jetson-Comms
-	url = https://github.com/CAVEMaN-SeniorDesign/Jetson-Comms
+	url = git@github.com:CAVEMaN-SeniorDesign/Jetson-Comms.git
 	branch = agx_dev
