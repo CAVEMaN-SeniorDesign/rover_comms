@@ -144,7 +144,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
             if (error_Lights != CAVE_TALK_ERROR_NONE){
                 std::string error_Lights_str = CaveTalk_ErrorToString(error_Lights);
-                RCLCPP_INFO(this->get_logger(), error_Lights_str);
+                RCLCPP_INFO(this->get_logger(), error_Lights_str.c_str());
             }
 	        RCLCPP_INFO(this->get_logger(), "Lights toggled");
             last_lights_toggle_ = this->get_clock()->now();
@@ -157,7 +157,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
             if (error_arm != CAVE_TALK_ERROR_NONE){
                 std::string error_arm_str = CaveTalk_ErrorToString(error_arm);
-                RCLCPP_INFO(this->get_logger(), error_arm_str);
+                RCLCPP_INFO(this->get_logger(), error_arm_str.c_str());
             }
 
             if (arm_toggle_){
@@ -180,9 +180,9 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             
             if (error_Movement != CAVE_TALK_ERROR_NONE){
                 std::string error_Movement_str = CaveTalk_ErrorToString(error_Movement);
-                RCLCPP_INFO(this->get_logger(), error_Movement_str);
+                RCLCPP_INFO(this->get_logger(), error_Movement_str.c_str());
             }
-            RCLCPP_INFO(this->get_logger(), command_vel_msg);
+            RCLCPP_INFO(this->get_logger(), command_vel_msg.c_str());
 
             prev_v_ = v;
             prev_omega_ = omega;
@@ -194,7 +194,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             std::string cmd_cam_msg = "Cam_Pan: "  + std::to_string(cam_pan_) + ", Cam_Tilt: " + std::to_string(cam_tilt_);
             //MARK: add error checking
             talker->SpeakCameraMovement(cam_pan_, cam_tilt_);
-            RCLCPP_INFO(this->get_logger(), cmd_cam_msg);
+            RCLCPP_INFO(this->get_logger(), cmd_cam_msg.c_str());
 
             prev_cam_pan_ = cam_pan_;
             prev_cam_tilt_ = cam_tilt_;

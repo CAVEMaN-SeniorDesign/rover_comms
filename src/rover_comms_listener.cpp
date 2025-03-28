@@ -31,7 +31,7 @@ void RoverCommsListener::HearOogaBooga(const cave_talk::Say ooga_booga)
         output = output + "Heard Booga, loop closed";
     }
 
-    RCLCPP_INFO(rover_comm_node_->get_logger(), output);
+    RCLCPP_INFO(rover_comm_node_->get_logger(), output.c_str());
 }
 
 void RoverCommsListener::HearMovement(const CaveTalk_MetersPerSecond_t speed, const CaveTalk_RadiansPerSecond_t turn_rate)

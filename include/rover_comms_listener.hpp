@@ -1,33 +1,6 @@
 #ifndef ROVER_COMM_LISTENER_HPP
 #define ROVER_COMM_LISTENER_HPP
 
-/*
-#include "rclcpp/rclcpp.hpp"
-#include "trajectory_msgs/msg/joint_trajectory.hpp"
-#include "sensor_msgs/msg/joy.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "rover_interfaces/msg/serial.hpp"
-#include "rover_interfaces/msg/odomplot.hpp"
-#include <cmath>
-#include <algorithm>
-
-#include <csignal>
-#include <unistd.h>  // For sleep()
-
-#include <cstddef>
-#include <functional>
-#include <memory>
-#include <vector>
-#include <fstream>
-#include <iostream>
-#include <string>
-
-#include "cave_talk.h"
-#include "jetson_cave_talk.h"
-#include "ring_buffer.h"
-#include <termios.h>
-*/
-
 #include "rover_comm.hpp"
 
 /*Common ports that are assigned on default (we should implement automatic port find and selection):
