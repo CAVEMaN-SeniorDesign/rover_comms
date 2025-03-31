@@ -920,3 +920,99 @@ bool RoverComm::openAndSendConfigMotor(std::string file){
     talker->SpeakConfigMotor(motor_wheels[0], motor_wheels[1], motor_wheels[2], motor_wheels[3]);
     return true;
 }
+
+bool RoverComm::readCameraMovementConfig(std::string file){
+
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError error = doc.LoadFile(file.c_str());
+    if (error != tinyxml2::XML_SUCCESS) {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *root_xml = doc.FirstChildElement();
+    if (root_xml == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *cam_movements = root_xml->FirstChildElement("CameraMovement");
+    if (cam_movements == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding CameraMovement");
+        // std::cout << "Error parsing file: Couldn't find ConfigEncoder" << std::endl;
+        return false;
+    }
+
+    int idx = 0;
+    std::string durationTime = "duration";
+    double durationTimeDouble;
+    double cam_pan_rad_ref;
+    double cam_tilt_rad_ref;
+    for(tinyxml2::XMLElement *profile = cam_movements->FirstChildElement(); profile != NULL; profile = profile->NextSiblingElement())
+    {
+        //iterate through profiles
+
+        int posIdx = 0;
+        for(tinyxml2::XMLElement *position = profile->FirstChildElement(); position != NULL; position = position->NextSiblingElement())
+        {
+            extractResult = profile->QueryDoubleAttribute(durationTime.c_str(), durationTimeDouble);
+            if (extractResult == 0) {
+                profiles[idx].duration[posIdx] = durationTimeDouble;
+                RCLCPP_INFO(this->get_logger(), "Duration: %f", profiles[idx].duration);
+                // std::cout << profiles[idx].duration << std::endl;
+            }
+
+            tinyxml2::XMLElement *cam_tilt_node = position->FirstChildElement("Cam_Tilt_Radians");
+            if (cam_tilt_node != nullptr)
+            {
+                extractResult = cam_tilt_node->QueryDoubleText(&cam_tilt_rad_ref);
+
+                if (extractResult == 0) {
+                    profiles[idx].cam_pan_radians[posIdx] = cam_tilt_rad_ref;
+                    // RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", cam_tilt_rad_ref);
+                    // std::cout << cam_tilt_rad_ref << std::endl;
+                }
+            }
+
+            tinyxml2::XMLElement *cam_pan_node = position->FirstChildElement("Cam_Pan_Radians");
+            if (cam_pan_node != nullptr)
+            {
+                extractResult = cam_pan_node->QueryDoubleText(&cam_pan_rad_ref);
+
+                if (extractResult == 0) {
+                    profiles[idx].cam_pan_radians[posIdx] = cam_pan_rad_ref;
+                    // RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", cam_pan_rad_ref);
+                    // std::cout << cam_pan_rad_ref << std::endl;
+                }
+            }
+
+            posIdx++;
+        }
+        //iterate through positions
+
+        idx++;
+    }
+    
+    int extractResult = -1;
+    
+    tinyxml2::XMLElement *log_level_xml = cam_movements->FirstChildElement("log_level");
+    if (log_level_xml != nullptr) {
+        extractResult = log_level_xml->QueryIntText(&log_level_int);
+
+        if(extractResult == 0){
+            log_level = static_cast<cave_talk::LogLevel>(log_level_int);
+            RCLCPP_INFO(this->get_logger(), "Log Level: %d", log_level_int);
+            // std::cout << log_level_int << std::endl;
+        }
+    }else{
+        RCLCPP_INFO(this->get_logger(), "Error finding log_level");
+        // std::cout << "Error parsing file: Couldn't find log_level" << std::endl;
+        return false;
+    }
+
+    talker->SpeakConfigLog(log_level);
+    return true;
+
+}

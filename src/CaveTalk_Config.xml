@@ -110,4 +110,32 @@
             <max_duty_cycle_percent>2000</max_duty_cycle_percent>
         </Motor_Wheel_3>
     </ConfigMotor>
+    <CameraMovement>
+        <Profile1>
+            <CM_0 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_0>
+            <CM_1 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_1>
+            <CM_2 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_2>
+            <CM_3 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_3>
+            <CM_4 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_4>
+            <CM_5 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_5>
+        </Profile1>
+    </CameraMovement>
 </CaveTalk_Config>

@@ -35,6 +35,16 @@
     /dev/ttyUSB1 - Sometimes it switches to this for some reason.
 */
 
+struct CameraMovement
+{
+    int maxLength = 10;
+    int length;
+    int index;
+    double cam_pan_radians[maxLength] = {0U};
+    double cam_tilt_radians[maxLength] = {0U};
+    double durations[maxLength] = {0U};
+};
+
 class RoverComm : public rclcpp::Node
 {
 public:
@@ -60,6 +70,8 @@ private:
     bool openAndSendConfigServoWheels(std::string file);
     bool openAndSendConfigServoCams(std::string file);
     bool openAndSendConfigMotor(std::string file);
+    bool readCameraMovementConfig(std::string file);
+    bool sendCameraMovement(int &camMoveIdx);
 
     // sub for /cmd_vel_joy topics and publish to joystick topic
     rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
