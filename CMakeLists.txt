@@ -102,7 +102,6 @@ target_link_libraries(rover_comms
         protobuf::libprotobuf
         ament_index_cpp::ament_index_cpp
         new_serial
-        jetson_comms
 )
 
 # target_include_directories(low_level_comms 
@@ -125,7 +124,7 @@ target_link_libraries(rover_comms
 #         ${CAVETALK_BUILD_DIR}/libCAVeTalk-c_messages.a
 #         ${CAVETALK_BUILD_DIR}/libCAVeTalk-cpp_messages.a
 #         protobuf::libprotobuf
-#         jetson_comms
+#       
 #         Catch2::Catch2WithMain
 #         new_serial
 # )
@@ -151,7 +150,7 @@ target_link_libraries(rover_comms
 #         ${CAVETALK_BUILD_DIR}/libCAVeTalk-c_messages.a
 #         ${CAVETALK_BUILD_DIR}/libCAVeTalk-cpp_messages.a
 #         protobuf::libprotobuf
-#         jetson_comms
+#       
 #         Catch2::Catch2WithMain
 #         new_serial
 # )
@@ -177,7 +176,7 @@ target_link_libraries(rover_comms
 #         ${CAVETALK_BUILD_DIR}/libCAVeTalk-c_messages.a
 #         ${CAVETALK_BUILD_DIR}/libCAVeTalk-cpp_messages.a
 #         protobuf::libprotobuf
-#         jetson_comms
+#       
 #         Catch2::Catch2WithMain
 #         new_serial
 # )
@@ -203,7 +202,7 @@ target_link_libraries(rover_comms
 #         ${CAVETALK_BUILD_DIR}/libCAVeTalk-c_messages.a
 #         ${CAVETALK_BUILD_DIR}/libCAVeTalk-cpp_messages.a
 #         protobuf::libprotobuf
-#         jetson_comms
+#       
 #         Catch2::Catch2WithMain
 #         new_serial
 # )
