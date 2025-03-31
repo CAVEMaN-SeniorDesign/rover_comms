@@ -89,12 +89,13 @@ namespace rover_comms
 // }
 
 CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port   = "",
-    uint32_t baudrate         = 9600,
-    Timeout timeout           = Timeout(),
-    bytesize_t bytesize       = eightbits,
-    parity_t parity           = parity_none,
-    stopbits_t stopbits       = stopbits_one,
-    flowcontrol_t flowcontrol = flowcontrol_none) : Serial(baudrate, timeout, bytesize, parity, stopbits, flowcontrol)
+                                       uint32_t baudrate         = 9600,
+                                       Timeout timeout           = Timeout(),
+                                       bytesize_t bytesize       = eightbits,
+                                       parity_t parity           = parity_none,
+                                       stopbits_t stopbits       = stopbits_one,
+                                       flowcontrol_t flowcontrol = flowcontrol_none) :
+    Serial(baudrate, timeout, bytesize, parity, stopbits, flowcontrol)
 {
     try
     {
@@ -102,6 +103,8 @@ CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port   = "",
 
         if (isOpen())
         {
+            flush();
+
             std::cout << "Serial port opened successfully." << std::endl;
         }
         else
@@ -117,6 +120,8 @@ CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port   = "",
 
 CaveTalkSerialPort::~CaveTalkSerialPort(void)
 {
+    std::cout << "DESTRUCTOR CALLED" << std::endl;
+
     if (isOpen())
     {
         flush();
