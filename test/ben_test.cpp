@@ -1,7 +1,6 @@
 #include <iostream>
 #include <memory>
 
-#include "jetson_cave_talk.h"
 #include "cave_talk.h"
 #include "ooga_booga.pb.h"
 
