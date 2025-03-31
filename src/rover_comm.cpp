@@ -1,5 +1,6 @@
 #include "rover_comm.hpp"
 
+
 RoverComm::RoverComm() : Node("rover_comm")
 {
     game_controller_type_ = "xbox";
@@ -17,12 +18,9 @@ RoverComm::RoverComm() : Node("rover_comm")
     // Check for connected game controllers
     std::string type = this->gameControllerType();
 
-    // while (!(new_serial::new_serial.isOpen()) && looping)
-    // {
-    //     RCLCPP_INFO(this->get_logger(), "UART init start error, trying again...");
-    //     init_error = new_serial::init();
-    //     sleep(1);
-    // }
+
+    RCLCPP_INFO(this->get_logger(), "UART init start error, trying again...");
+    sleep(1);
 
     first_talk_ = true;
 
@@ -30,45 +28,44 @@ RoverComm::RoverComm() : Node("rover_comm")
 
     speak_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
-        std::bind(&RoverComm::speak_callback, this));
+        std::bind(&RoverComm::speak_callback, this)
+        );
 
     listen_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(10),
-        std::bind(&RoverComm::listen_callback, this));
+        std::bind(&RoverComm::listen_callback, this)
+        );
+
+}
+
+RoverComm::~RoverComm()
+{
 }
 
 std::string RoverComm::CaveTalk_ErrorToString(CaveTalk_Error_t error)
 {
     switch (error)
     {
-    case CAVE_TALK_ERROR_NONE:
-        return "CAVE_TALK_ERROR_NONE";
-    case CAVE_TALK_ERROR_NULL:
-        return "CAVE_TALK_ERROR_NULL";
-    case CAVE_TALK_ERROR_SIZE:
-        return "CAVE_TALK_ERROR_SIZE";
-    case CAVE_TALK_ERROR_SOCKET_CLOSED:
-        return "CAVE_TALK_ERROR_SOCKET_CLOSED";
-    case CAVE_TALK_ERROR_INCOMPLETE:
-        return "CAVE_TALK_ERROR_INCOMPLETE";
-    case CAVE_TALK_ERROR_CRC:
-        return "CAVE_TALK_ERROR_CRC";
-    case CAVE_TALK_ERROR_VERSION:
-        return "CAVE_TALK_ERROR_VERSION";
-    case CAVE_TALK_ERROR_ID:
-        return "CAVE_TALK_ERROR_ID";
-    case CAVE_TALK_ERROR_PARSE:
-        return "CAVE_TALK_ERROR_PARSE";
-    default:
-        return "UNKNOWN_ERROR";
+    case CAVE_TALK_ERROR_NONE: return "CAVE_TALK_ERROR_NONE";
+    case CAVE_TALK_ERROR_NULL: return "CAVE_TALK_ERROR_NULL";
+    case CAVE_TALK_ERROR_SIZE: return "CAVE_TALK_ERROR_SIZE";
+    case CAVE_TALK_ERROR_SOCKET_CLOSED: return "CAVE_TALK_ERROR_SOCKET_CLOSED";
+    case CAVE_TALK_ERROR_INCOMPLETE: return "CAVE_TALK_ERROR_INCOMPLETE";
+    case CAVE_TALK_ERROR_CRC: return "CAVE_TALK_ERROR_CRC";
+    case CAVE_TALK_ERROR_VERSION: return "CAVE_TALK_ERROR_VERSION";
+    case CAVE_TALK_ERROR_ID: return "CAVE_TALK_ERROR_ID";
+    case CAVE_TALK_ERROR_PARSE: return "CAVE_TALK_ERROR_PARSE";
+    default: return "UNKNOWN_ERROR";
     }
 }
+
+
 
 void RoverComm::listen_callback()
 {
     if (listener)
     {
-        // RCLCPP_INFO(this->get_logger(), "Listening...");
+        //RCLCPP_INFO(this->get_logger(), "Listening...");
         listener->Listen();
     }
     else
@@ -79,7 +76,7 @@ void RoverComm::listen_callback()
 
 void RoverComm::speak_callback()
 {
-    if (talker && waiting_booga) // if still waiting for booga, send more oogas
+    if (talker && waiting_booga) //if still waiting for booga, send more oogas
     {
         RCLCPP_INFO(this->get_logger(), "Sending Ooga, awaiting Booga...");
         talker->SpeakOogaBooga(cave_talk::SAY_OOGA);
@@ -89,6 +86,7 @@ void RoverComm::speak_callback()
         RCLCPP_INFO(this->get_logger(), "Waiting for Speaker to be passed...");
     }
 }
+
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
@@ -103,7 +101,6 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
         {
             RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: False");
         }
-        // CaveTalk_Error_t flush_error = new_serial::flush();//clearbuffer
         first_talk_ = false;
     }
 
@@ -122,8 +119,8 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             double l_trig = -msg->axes[5] + 1; //
             omega = msg->axes[0];              // Angular velocity on joy 0
 
-            // left-rght is msg->axes[6], left is +
-            // up-down is msg->axes[7], up is +
+            //left-rght is msg->axes[6], left is +
+            //up-down is msg->axes[7], up is +
             cam_pan_  += ((msg->axes[6]) * 3.1415926 / 32.0);
             cam_tilt_ += ((msg->axes[7]) * 3.1415926 / 32.0);
 
@@ -144,19 +141,19 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             {
                 cam_tilt_ = max_cam_tilt_radian_;
             }
-            v = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0); // normalize to MAX_LINEAR_VEL
+            v = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
         }
         else
         {
             double l_joy = msg->axes[1];
-            omega = msg->axes[2]; // powerA Steering with right joy
+            omega = msg->axes[2]; //powerA Steering with right joy
             v     = (l_joy);
         }
 
         if (msg->buttons[4] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_))
         {
-            lights_toggle_ = !lights_toggle_; // toggle
-            // MARK: add error checking
+            lights_toggle_ = !lights_toggle_; //toggle
+            //MARK: add error checking
             CaveTalk_Error_t error_Lights = talker->SpeakLights(lights_toggle_);
 
             if (error_Lights != CAVE_TALK_ERROR_NONE)
@@ -170,8 +167,8 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
         if (msg->buttons[1] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_))
         {
-            arm_toggle_ = !arm_toggle_; // toggle
-            // MARK: add error checking
+            arm_toggle_ = !arm_toggle_; //toggle
+            //MARK: add error checking
             CaveTalk_Error_t error_arm = talker->SpeakArm(arm_toggle_);
 
             if (error_arm != CAVE_TALK_ERROR_NONE)
@@ -192,12 +189,13 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             last_arm_toggle_ = this->get_clock()->now();
         }
 
+
         if (first_log || (v != prev_v_ || omega != prev_omega_))
         {
             first_log = false;
 
             std::string command_vel_msg = "Linear_Vel: " + std::to_string(v) + ", Angular Vel: " + std::to_string(omega);
-            // MARK: add error checking
+            //MARK: add error checking
             CaveTalk_Error_t error_Movement = talker->SpeakMovement(v, omega);
 
             if (error_Movement != CAVE_TALK_ERROR_NONE)
@@ -215,8 +213,8 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
         {
             first_log_cams = false;
 
-            std::string cmd_cam_msg = "Cam_Pan: " + std::to_string(cam_pan_) + ", Cam_Tilt: " + std::to_string(cam_tilt_);
-            // MARK: add error checking
+            std::string cmd_cam_msg = "Cam_Pan: "  + std::to_string(cam_pan_) + ", Cam_Tilt: " + std::to_string(cam_tilt_);
+            //MARK: add error checking
             talker->SpeakCameraMovement(cam_pan_, cam_tilt_);
             RCLCPP_INFO(this->get_logger(), cmd_cam_msg.c_str());
 
@@ -261,11 +259,11 @@ std::string RoverComm::gameControllerType()
             {
                 this->game_controller_type_ = "powerA";
                 std::cout << game_controller_type_ << " controller detected" << std::endl;
-                return std::string("powerA"); // powerA has no analog triggers, will be default case
+                return std::string("powerA"); //powerA has no analog triggers, will be default case
             }
         }
     }
-    return "powerA"; // powerA has no analog triggers, will be default case
+    return "powerA"; //powerA has no analog triggers, will be default case
 }
 
 // Open and send XML config file to MCU
@@ -353,6 +351,7 @@ bool RoverComm::openAndSendConfigEncoder(std::string file)
             {
                 std::cout << "Failed to extract smooth" << std::endl;
             }
+
         }
         else
         {
@@ -427,11 +426,13 @@ bool RoverComm::openAndSendConfigEncoder(std::string file)
             encoders[i].set_mode(cave_talk::EncoderMode::BSP_ENCODER_USER_MODE_PULSES_PER_ROTATON);
             // encoders[i].mode = cave_talk_EncoderMode::cave_talk_EncoderMode_BSP_ENCODER_USER_MODE_PULSES_PER_ROTATON;
         }
+
     }
 
     // roverMouth.SpeakConfigEncoder(encoders[0], encoders[1], encoders[2], encoders[3]));
     talker->SpeakConfigEncoder(encoders[0], encoders[1], encoders[2], encoders[3]);
     return true;
+
 }
 
 bool RoverComm::openAndSendConfigLog(std::string file)
@@ -488,6 +489,7 @@ bool RoverComm::openAndSendConfigLog(std::string file)
 
     talker->SpeakConfigLog(log_level);
     return true;
+
 }
 
 bool RoverComm::openAndSendConfigServoWheels(std::string file)
@@ -1045,6 +1047,8 @@ bool RoverComm::openAndSendConfigMotor(std::string file)
         {
             motor_wheels[i].set_max_duty_cycle_percentage(-1);
         }
+
+
     }
 
     talker->SpeakConfigMotor(motor_wheels[0], motor_wheels[1], motor_wheels[2], motor_wheels[3]);

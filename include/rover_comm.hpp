@@ -24,7 +24,6 @@
 #include "rover_comms_serial.hpp"
 #include "tinyxml2.h"
 
-
 #define MAX_LINEAR_VEL  1.0
 #define MAX_ANGULAR_VEL 1.0
 
