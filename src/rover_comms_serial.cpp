@@ -7,7 +7,7 @@
 #include "cave_talk.h"
 #include "serial/serial.h"
 
-namespace rover_comms
+namespace rover_comms_serial
 {
 
 // TODO move elsewhere
@@ -61,12 +61,12 @@ static serial::Serial serial_port("",
                                   serial::stopbits_one,
                                   serial::flowcontrol_none);
 
-void SerialStart(const std::string &port, const uint32_t baudrate)
+void Start(const std::string &port, const uint32_t baudrate)
 {
     try
     {
-        SerialSetPort(port);
-        SerialSetBaudrate(baudrate);
+        SetPort(port);
+        SetBaudrate(baudrate);
         serial_port.open();
 
         if (serial_port.isOpen())
@@ -86,7 +86,7 @@ void SerialStart(const std::string &port, const uint32_t baudrate)
     }
 }
 
-void SerialStop(void)
+void Stop(void)
 {
     std::cout << "DESTRUCTOR CALLED" << std::endl;
 
@@ -97,7 +97,7 @@ void SerialStop(void)
     }
 }
 
-void SerialSetPort(const std::string &port)
+void SetPort(const std::string &port)
 {
     serial_port.setPort(port);
 
@@ -107,12 +107,12 @@ void SerialSetPort(const std::string &port)
     }
 }
 
-void SerialSetBaudrate(const uint32_t baudrate)
+void SetBaudrate(const uint32_t baudrate)
 {
     serial_port.setBaudrate(baudrate);
 }
 
-CaveTalk_Error_t SerialSend(const void *const data, const size_t size)
+CaveTalk_Error_t Send(const void *const data, const size_t size)
 {
     CaveTalk_Error_t error = CAVE_TALK_ERROR_SOCKET_CLOSED;
 
@@ -137,7 +137,7 @@ CaveTalk_Error_t SerialSend(const void *const data, const size_t size)
     return error;
 }
 
-CaveTalk_Error_t SerialReceive(void *const data, const size_t size, size_t *const bytes_received)
+CaveTalk_Error_t Receive(void *const data, const size_t size, size_t *const bytes_received)
 {
     CaveTalk_Error_t error = CAVE_TALK_ERROR_SOCKET_CLOSED;
 
@@ -157,4 +157,4 @@ CaveTalk_Error_t SerialReceive(void *const data, const size_t size, size_t *cons
     return error;
 }
 
-} // namespace rover_comms
+} // namespace rover_comms_serial
