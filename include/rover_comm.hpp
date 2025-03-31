@@ -84,11 +84,6 @@ class RoverComm : public rclcpp::Node
         rclcpp::Time last_lights_toggle_ = this->get_clock()->now();
         rclcpp::Time last_arm_toggle_    = this->get_clock()->now();
         double toggle_button_timeout_    = 0.5; // half-second time-out
-
-        // // serial params, can be modified in rover_comms/src/Serial_Config.xml
-        // std:string serial_port_ = "/dev/ttyTHS1";
-        // unsigned long serialBaud_ = 1000000;
-        // serial::Timeout timeout = serial::Timeout::simpleTimeout(0); // non-blocking
 };
 
 #endif // ROVER_COMM_HPP
