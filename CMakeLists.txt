@@ -17,11 +17,11 @@ include_directories(include)
 set(CMAKE_PREFIX_PATH "/usr/local/lib")
 set(HEADER_DIR ${CMAKE_PREFIX_PATH}/../include/c++)
 set(COMMON_DIR ${CMAKE_PREFIX_PATH}/../include/common)
-set(JETSON_CAVE_TALK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/CAVeTalk)
-set(CAVETALK_BUILD_DIR ${JETSON_CAVE_TALK_DIR}/CAVeTalk/build) 
+set(CAVE_TALK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/CAVeTalk)
+set(CAVETALK_BUILD_DIR ${CAVE_TALK_DIR}/build) 
 
 set(PROTO_DIR ${CAVETALK_BUILD_DIR}/CAVeTalk-cpp_protos)
-set(CAVETALK_DIR ${JETSON_CAVE_TALK_DIR}/CAVeTalk)
+set(CAVETALK_DIR ${CAVE_TALK_DIR})
 set(CAVEHEADER_DIR ${CAVETALK_DIR}/lib/c++/inc)
 set(CAVECOMMON_DIR ${CAVETALK_DIR}/lib/common/inc)
 set(CATCH_DIR /usr/local/include)
@@ -43,7 +43,7 @@ target_include_directories(new_serial
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CAVEHEADER_DIR}
         ${CAVECOMMON_DIR}
-        ${JETSON_CAVE_TALK_DIR}/inc
+        ${CAVE_TALK_DIR}/inc
         ${CAVETALK_BUILD_DIR}
         ${PROTO_DIR}
         ${PROTOBUF_INSTALL_DIR}/include
@@ -73,7 +73,7 @@ ament_target_dependencies(ben_test rclcpp sensor_msgs std_msgs rover_interfaces 
 add_executable(cserial test/cserial.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
 ament_target_dependencies(cserial rclcpp sensor_msgs std_msgs rover_interfaces serial)
 
-set(PROTOBUF_INSTALL_DIR ${JETSON_CAVE_TALK_DIR}/CAVeTalk/external/protobuf/_build/protobuf-install)
+set(PROTOBUF_INSTALL_DIR ${CAVE_TALK_DIR}/external/protobuf/_build/protobuf-install)
 add_subdirectory(${CAVETALK_DIR}/external/protobuf/third_party/abseil-cpp)
 
 find_package(utf8_range CONFIG REQUIRED HINTS ${PROTOBUF_INSTALL_DIR})
@@ -84,7 +84,7 @@ target_include_directories(rover_comms
     PUBLIC
         ${CAVEHEADER_DIR}
         ${CAVECOMMON_DIR}
-        ${JETSON_CAVE_TALK_DIR}/inc
+        ${CAVE_TALK_DIR}/inc
         ${CAVETALK_BUILD_DIR}
         ${PROTO_DIR}
         ${PROTOBUF_INSTALL_DIR}/include
@@ -108,7 +108,7 @@ target_include_directories(low_level_comms
     PUBLIC
         ${CAVEHEADER_DIR}
         ${CAVECOMMON_DIR}
-        ${JETSON_CAVE_TALK_DIR}/inc
+        ${CAVE_TALK_DIR}/inc
         ${CAVETALK_BUILD_DIR}
         ${PROTO_DIR}
         ${PROTOBUF_INSTALL_DIR}/include
@@ -133,7 +133,7 @@ target_include_directories(high_level_comms
     PUBLIC
         ${CAVEHEADER_DIR}
         ${CAVECOMMON_DIR}
-        ${JETSON_CAVE_TALK_DIR}/inc
+        ${CAVE_TALK_DIR}/inc
         ${CAVETALK_BUILD_DIR}
         ${PROTO_DIR}
         ${PROTOBUF_INSTALL_DIR}/include
@@ -159,7 +159,7 @@ target_include_directories(ben_test
     PUBLIC
         ${CAVEHEADER_DIR}
         ${CAVECOMMON_DIR}
-        ${JETSON_CAVE_TALK_DIR}/inc
+        ${CAVE_TALK_DIR}/inc
         ${CAVETALK_BUILD_DIR}
         ${PROTO_DIR}
         ${PROTOBUF_INSTALL_DIR}/include
@@ -185,7 +185,7 @@ target_include_directories(cserial
     PUBLIC
         ${CAVEHEADER_DIR}
         ${CAVECOMMON_DIR}
-        ${JETSON_CAVE_TALK_DIR}/inc
+        ${CAVE_TALK_DIR}/inc
         ${CAVETALK_BUILD_DIR}
         ${PROTO_DIR}
         ${PROTOBUF_INSTALL_DIR}/include
