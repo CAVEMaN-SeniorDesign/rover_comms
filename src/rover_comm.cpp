@@ -18,14 +18,6 @@ RoverComm::RoverComm() : Node("rover_comm")
     // Check for connected game controllers
     std::string type = this->gameControllerType();
 
-
-    RCLCPP_INFO(this->get_logger(), "UART init start error, trying again...");
-    sleep(1);
-
-    first_talk_ = true;
-
-    RCLCPP_INFO(this->get_logger(), "rover_comms up on port ");
-
     speak_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
         std::bind(&RoverComm::speak_callback, this)
@@ -35,7 +27,6 @@ RoverComm::RoverComm() : Node("rover_comm")
         std::chrono::milliseconds(10),
         std::bind(&RoverComm::listen_callback, this)
         );
-
 }
 
 RoverComm::~RoverComm()
@@ -65,8 +56,12 @@ void RoverComm::listen_callback()
 {
     if (listener)
     {
-        //RCLCPP_INFO(this->get_logger(), "Listening...");
-        listener->Listen();
+        CaveTalk_Error_t error = listener->Listen();
+
+        if (CAVE_TALK_ERROR_NONE != error)
+        {
+            RCLCPP_INFO(this->get_logger(), "Listener error %s", CaveTalk_ErrorToString(error));
+        }
     }
     else
     {

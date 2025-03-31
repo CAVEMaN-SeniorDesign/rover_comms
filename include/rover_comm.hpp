@@ -78,7 +78,7 @@ class RoverComm : public rclcpp::Node
         double max_cam_tilt_radian_ = 6.2831853;
         bool lights_toggle_;
         bool arm_toggle_;
-        bool first_talk_; // bool to assist syncing with MCU
+        bool first_talk_ = true; // bool to assist syncing with MCU
 
         // button sw-debouncing with a .5sec timeout
         rclcpp::Time last_lights_toggle_ = this->get_clock()->now();
