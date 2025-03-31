@@ -1,7 +1,5 @@
 #include "rover_comms_listener.hpp"
 
-// cave_talk::ListenerCallbacks::~ListenerCallbacks() = default;
-
 
 // ListenerCallbacks implementation
 RoverCommsListener::RoverCommsListener(std::shared_ptr<RoverComm> node) : rover_comm_node_(node) // assigns to rover_comm_node_

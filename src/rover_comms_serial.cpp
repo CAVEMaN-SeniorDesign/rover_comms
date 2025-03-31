@@ -10,48 +10,6 @@
 namespace rover_comms_serial
 {
 
-// TODO move elsewhere
-// bool getSerialConfig(std::string file)
-// {
-//     tinyxml2::XMLDocument doc;
-//     tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
-
-//     if (error != tinyxml2::XML_SUCCESS)
-//     {
-//         std::cout << "Serial Config error: " << file.c_str() << std::endl;
-//         return false;
-//     }
-
-//     tinyxml2::XMLElement *root = doc.FirstChildElement("Serial_Config");
-//     if (!root)
-//     {
-//         std::cerr << "Missing <Serial_Config> root element" << std::endl;
-//         return false;
-//     }
-
-//     tinyxml2::XMLElement *portElem = root->FirstChildElement("port");
-//     if (portElem && portElem->GetText())
-//     {
-//         port = portElem->GetText();
-//     }
-//     else
-//     {
-//         std::cerr << "Using default port: " << port << std::endl;
-//     }
-
-//     tinyxml2::XMLElement *baudElem = root->FirstChildElement("baud");
-//     if (baudElem && baudElem->GetText())
-//     {
-//         baud = std::stoul(baudElem->GetText());
-//     }
-//     else
-//     {
-//         std::cerr << "Using default baud: " << baud << std::endl;
-//     }
-
-//     return true;
-// }
-
 static const uint32_t kDefaultBaudrate = 1000000U;
 static serial::Serial serial_port("",
                                   kDefaultBaudrate,
@@ -88,8 +46,6 @@ void Start(const std::string &port, const uint32_t baudrate)
 
 void Stop(void)
 {
-    std::cout << "DESTRUCTOR CALLED" << std::endl;
-
     if (serial_port.isOpen())
     {
         serial_port.flush();
