@@ -47,6 +47,7 @@ target_include_directories(new_serial
         ${CAVETALK_BUILD_DIR}
         ${PROTO_DIR}
         ${PROTOBUF_INSTALL_DIR}/include
+        external/tinyxml/inc
 )
 
 target_link_libraries(new_serial
@@ -58,19 +59,19 @@ target_link_libraries(new_serial
         protobuf::libprotobuf
 )
 
-add_executable(rover_comms src/main.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+add_executable(rover_comms src/main.cpp src/rover_comm.cpp src/rover_comms_listener.cpp external/tinyxml/src/tinyxml2.cpp)
 ament_target_dependencies(rover_comms rclcpp sensor_msgs std_msgs rover_interfaces serial)
 
-add_executable(low_level_comms test/low_level_comms.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+add_executable(low_level_comms test/low_level_comms.cpp src/rover_comm.cpp src/rover_comms_listener.cpp external/tinyxml/src/tinyxml2.cpp)
 ament_target_dependencies(low_level_comms rclcpp sensor_msgs std_msgs rover_interfaces serial)
 
-add_executable(high_level_comms test/high_level_comms.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+add_executable(high_level_comms test/high_level_comms.cpp src/rover_comm.cpp src/rover_comms_listener.cpp external/tinyxml/src/tinyxml2.cpp)
 ament_target_dependencies(high_level_comms rclcpp sensor_msgs std_msgs rover_interfaces serial)
 
-add_executable(ben_test test/ben_test.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+add_executable(ben_test test/ben_test.cpp src/rover_comm.cpp src/rover_comms_listener.cpp external/tinyxml/src/tinyxml2.cpp)
 ament_target_dependencies(ben_test rclcpp sensor_msgs std_msgs rover_interfaces serial)
 
-add_executable(cserial test/cserial.cpp src/rover_comm.cpp src/rover_comms_listener.cpp src/tinyxml2.cpp)
+add_executable(cserial test/cserial.cpp src/rover_comm.cpp src/rover_comms_listener.cpp external/tinyxml/src/tinyxml2.cpp)
 ament_target_dependencies(cserial rclcpp sensor_msgs std_msgs rover_interfaces serial)
 
 set(PROTOBUF_INSTALL_DIR ${CAVE_TALK_DIR}/external/protobuf/_build/protobuf-install)
