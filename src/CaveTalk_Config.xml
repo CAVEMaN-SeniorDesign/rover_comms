@@ -33,32 +33,32 @@
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0.027</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>0.1235</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Wheel_0>
         <Servo_Wheel_1>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
-            <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0.033</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>0.130</max_duty_cycle_microsec>
+            <center_duty_cycle_microsec>50</center_duty_cycle_microsec>
         </Servo_Wheel_1>
         <Servo_Wheel_2>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0.0347</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>0.130</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Wheel_2>
         <Servo_Wheel_3>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0.025</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>0.1203</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Wheel_3>
     </ConfigServoWheels>
@@ -67,47 +67,47 @@
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>0.0625</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Cam_Pan>
         <Servo_Cam_Tilt>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>0.125</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Cam_Tilt>
     </ConfigServoCams>
     <ConfigMotor>
         <Motor_Wheel_0>
-            <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
+            <pwm_carrier_freq_hz>10000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
-            <max_speed_loaded_mps>1.0</max_speed_loaded_mps>
-            <min_duty_cycle_percent>1000</min_duty_cycle_percent>
-            <max_duty_cycle_percent>2000</max_duty_cycle_percent>
+            <max_speed_loaded_mps>12.5</max_speed_loaded_mps>
+            <min_duty_cycle_percent>0.0</min_duty_cycle_percent>
+            <max_duty_cycle_percent>1.0</max_duty_cycle_percent>
         </Motor_Wheel_0>
         <Motor_Wheel_1>
-            <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
+            <pwm_carrier_freq_hz>10000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
-            <max_speed_loaded_mps>1.0</max_speed_loaded_mps>
-            <min_duty_cycle_percent>1000</min_duty_cycle_percent>
-            <max_duty_cycle_percent>2000</max_duty_cycle_percent>
+            <max_speed_loaded_mps>12.5</max_speed_loaded_mps>
+            <min_duty_cycle_percent>0.0</min_duty_cycle_percent>
+            <max_duty_cycle_percent>1.0</max_duty_cycle_percent>
         </Motor_Wheel_1>
         <Motor_Wheel_2>
-            <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
+            <pwm_carrier_freq_hz>10000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
-            <max_speed_loaded_mps>1.0</max_speed_loaded_mps>
-            <min_duty_cycle_percent>1000</min_duty_cycle_percent>
-            <max_duty_cycle_percent>2000</max_duty_cycle_percent>
+            <max_speed_loaded_mps>12.5</max_speed_loaded_mps>
+            <min_duty_cycle_percent>0.0</min_duty_cycle_percent>
+            <max_duty_cycle_percent>1.0</max_duty_cycle_percent>
         </Motor_Wheel_2>
         <Motor_Wheel_3>
-            <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
+            <pwm_carrier_freq_hz>10000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
-            <max_speed_loaded_mps>1.0</max_speed_loaded_mps>
-            <min_duty_cycle_percent>1000</min_duty_cycle_percent>
-            <max_duty_cycle_percent>2000</max_duty_cycle_percent>
+            <max_speed_loaded_mps>12.5</max_speed_loaded_mps>
+            <min_duty_cycle_percent>0.0</min_duty_cycle_percent>
+            <max_duty_cycle_percent>1.0</max_duty_cycle_percent>
         </Motor_Wheel_3>
     </ConfigMotor>
 </CaveTalk_Config>

@@ -77,6 +77,8 @@ ament_target_dependencies(cserial rclcpp sensor_msgs std_msgs rover_interfaces s
 
 set(PROTOBUF_INSTALL_DIR ${JETSON_CAVE_TALK_DIR}/CAVeTalk/external/protobuf/_build/protobuf-install)
 add_subdirectory(${CAVETALK_DIR}/external/protobuf/third_party/abseil-cpp)
+find_package(utf8_range CONFIG REQUIRED HINTS ${PROTOBUF_INSTALL_DIR})
+find_package(absl CONFIG REQUIRED HINTS ${PROTOBUF_INSTALL_DIR})
 find_package(Protobuf CONFIG REQUIRED HINTS ${PROTOBUF_INSTALL_DIR})
 
 target_include_directories(rover_comms 
