@@ -1,5 +1,5 @@
 <CaveTalk_Config>
-    <ConfigEncoder>
+    <ConfigEncoder send="True">
         <Encoder_Wheel_0>
             <smoothing_factor>.005</smoothing_factor>
             <radians_per_pulse>0.2</radians_per_pulse>
@@ -25,10 +25,10 @@
             <mode>1</mode>
         </Encoder_Wheel_3>
     </ConfigEncoder>
-    <ConfigLog>
+    <ConfigLog send="True">
         <log_level>4</log_level> <!-- 0: Error, 1: Warning, 2: Info, 3: Debug, 4: Verbose -->
     </ConfigLog>
-    <ConfigServoWheels>
+    <ConfigServoWheels send="True">
         <Servo_Wheel_0>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
@@ -62,7 +62,7 @@
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Wheel_3>
     </ConfigServoWheels>
-    <ConfigServoCams>
+    <ConfigServoCams send="True">
         <Servo_Cam_Pan>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
@@ -80,7 +80,7 @@
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Cam_Tilt>
     </ConfigServoCams>
-    <ConfigMotor>
+    <ConfigMotor send="True">
         <Motor_Wheel_0>
             <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
@@ -110,4 +110,32 @@
             <max_duty_cycle_percent>2000</max_duty_cycle_percent>
         </Motor_Wheel_3>
     </ConfigMotor>
+    <CameraMovement startProfile="0">
+        <Profile0>
+            <CM_0 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_0>
+            <CM_1 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_1>
+            <CM_2 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_2>
+            <CM_3 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_3>
+            <CM_4 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_4>
+            <CM_5 duration="0.05">
+                <Cam_Tilt_Radians>0</Cam_Tilt_Radians>
+                <Cam_Pan_Radians>0</Cam_Pan_Radians>
+            </CM_5>
+        </Profile0>
+    </CameraMovement>
 </CaveTalk_Config>

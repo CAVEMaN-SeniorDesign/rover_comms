@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <chrono>
 
 #include "cave_talk.h"
 #include "new_serial.hpp"
@@ -36,6 +37,16 @@
     /dev/ttyUSB1 - Sometimes it switches to this for some reason.
 */
 
+struct CameraMovement
+{
+    static const int maxLength = 10;
+    int length;
+    int index = 0;
+    double cam_pan_radians[maxLength] = {0U};
+    double cam_tilt_radians[maxLength] = {0U};
+    double durations[maxLength] = {0U};
+};
+
 class RoverComm : public rclcpp::Node
 {
 public:
@@ -45,6 +56,7 @@ public:
     std::shared_ptr<cave_talk::Listener> listener;
     rclcpp::TimerBase::SharedPtr speak_timer_;
     rclcpp::TimerBase::SharedPtr listen_timer_;
+    rclcpp::TimerBase::SharedPtr cam_move_timer_;
     rclcpp::Publisher<rover_interfaces::msg::Odomplot>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
     std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
 
@@ -54,6 +66,7 @@ private:
     void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
     void listen_callback();
     void speak_callback();
+    void cam_move_callback();
     std::string gameControllerType();
     bool sendConfigs(std::string file);
     bool openAndSendConfigEncoder(std::string file);
@@ -61,6 +74,8 @@ private:
     bool openAndSendConfigServoWheels(std::string file);
     bool openAndSendConfigServoCams(std::string file);
     bool openAndSendConfigMotor(std::string file);
+    bool readCameraMovementConfig(std::string file);
+    bool sendCameraMovement();
 
     // sub for /cmd_vel_joy topics and publish to joystick topic
     rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
@@ -81,6 +96,12 @@ private:
     bool lights_toggle_; 
     bool arm_toggle_;
     bool first_talk_; // bool to assist syncing with MCU
+
+    // camera movement vars
+    struct CameraMovement profiles[5];
+    int camera_movement_profile_length_ = 0;
+    int camera_movement_profile_index_ = 0;
+    std::chrono::time_point<std::chrono::steady_clock> cam_move_last_move_time_;
 
     // button sw-debouncing with a .5sec timeout
     rclcpp::Time last_lights_toggle_ = this->get_clock()->now();
