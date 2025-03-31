@@ -52,7 +52,7 @@ namespace rover_comms
 //     return true;
 // }
 
-static const uint32_t kDefaultBaudrate = 1e6U;
+static const uint32_t kDefaultBaudrate = 1000000U;
 static serial::Serial serial_port("",
                                   kDefaultBaudrate,
                                   serial::Timeout::simpleTimeout(0),
