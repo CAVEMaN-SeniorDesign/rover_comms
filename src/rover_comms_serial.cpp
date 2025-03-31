@@ -162,7 +162,7 @@ CaveTalk_Error_t CaveTalkSerialPort::Receive(void *const data, const size_t size
     {
         try
         {
-            *bytes_received = read(static_cast<const uint8_t *>(data), size);
+            *bytes_received = read(static_cast<uint8_t *const>(data), size);
 
             error = CAVE_TALK_ERROR_NONE;
         }
