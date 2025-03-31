@@ -54,6 +54,7 @@ public:
     std::shared_ptr<cave_talk::Listener> listener;
     rclcpp::TimerBase::SharedPtr speak_timer_;
     rclcpp::TimerBase::SharedPtr listen_timer_;
+    rclcpp::TimerBase::SharedPtr cam_move_timer_;
     rclcpp::Publisher<rover_interfaces::msg::Odomplot>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
     std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
 
@@ -71,7 +72,7 @@ private:
     bool openAndSendConfigServoCams(std::string file);
     bool openAndSendConfigMotor(std::string file);
     bool readCameraMovementConfig(std::string file);
-    bool sendCameraMovement(int &camMoveIdx);
+    bool sendCameraMovement();
 
     // sub for /cmd_vel_joy topics and publish to joystick topic
     rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
@@ -92,6 +93,9 @@ private:
     bool lights_toggle_; 
     bool arm_toggle_;
     bool first_talk_; // bool to assist syncing with MCU
+
+    int camera_movement_profile_index_ = 0;
+    int camera_movement_position_index_ = 0;
 
     // button sw-debouncing with a .5sec timeout
     rclcpp::Time last_lights_toggle_ = this->get_clock()->now();

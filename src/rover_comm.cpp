@@ -30,6 +30,8 @@ RoverComm::RoverComm() : Node("rover_comm")
 
     RCLCPP_INFO(this->get_logger(), "rover_comms up on port ");
 
+    readCameraMovementConfig("/root/ros2_ws/src/rover_comms/src/CaveTalk_Config.xml");
+
     speak_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
         std::bind(&RoverComm::speak_callback, this)
@@ -38,6 +40,11 @@ RoverComm::RoverComm() : Node("rover_comm")
     listen_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(10),
         std::bind(&RoverComm::listen_callback, this)
+    );
+
+    cam_move_timer_ = this->create_wall_timer(
+        std::chrono::milliseconds(20),
+        std::bind(&RoverComm::sendCameraMovement, this)
     );
     
 }
@@ -83,6 +90,8 @@ void RoverComm::speak_callback(){
             RCLCPP_INFO(this->get_logger(), "Waiting for Speaker to be passed...");
     }
 }
+
+void RoverComm::sendCameraMovement(){}
 
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
