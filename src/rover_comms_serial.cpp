@@ -90,10 +90,10 @@ void SerialStop(void)
 {
     std::cout << "DESTRUCTOR CALLED" << std::endl;
 
-    if (isOpen())
+    if (serial_port.isOpen())
     {
-        flush();
-        close();
+        serial_port.flush();
+        serial_port.close();
     }
 }
 
@@ -116,11 +116,11 @@ CaveTalk_Error_t SerialSend(const void *const data, const size_t size)
 {
     CaveTalk_Error_t error = CAVE_TALK_ERROR_SOCKET_CLOSED;
 
-    if (isOpen())
+    if (serial_port.isOpen())
     {
         try
         {
-            if (write(static_cast<const uint8_t *>(data), size) < size)
+            if (serial_port.write(static_cast<const uint8_t *>(data), size) < size)
             {
                 error = CAVE_TALK_ERROR_INCOMPLETE;
             }
@@ -141,11 +141,11 @@ CaveTalk_Error_t SerialReceive(void *const data, const size_t size, size_t *cons
 {
     CaveTalk_Error_t error = CAVE_TALK_ERROR_SOCKET_CLOSED;
 
-    if (isOpen())
+    if (serial_port.isOpen())
     {
         try
         {
-            *bytes_received = read(static_cast<uint8_t *const>(data), size);
+            *bytes_received = serial_port.read(static_cast<uint8_t *const>(data), size);
 
             error = CAVE_TALK_ERROR_NONE;
         }
