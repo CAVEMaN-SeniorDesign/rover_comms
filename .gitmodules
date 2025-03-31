@@ -1,0 +1,3 @@
+[submodule "external/CAVeTalk"]
+	path = external/CAVeTalk
+	url = git@github.com:CAVEMaN-SeniorDesign/CAVeTalk.git

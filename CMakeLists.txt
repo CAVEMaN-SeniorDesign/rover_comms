@@ -9,7 +9,7 @@ project(rover_comms)
 set(CMAKE_CXX_STANDARD 20)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Werror -Wall -Wextra -Wpedantic -fdiagnostics-color=always)
 endif()
 
 include_directories(include)
@@ -17,7 +17,7 @@ include_directories(include)
 set(CMAKE_PREFIX_PATH "/usr/local/lib")
 set(HEADER_DIR ${CMAKE_PREFIX_PATH}/../include/c++)
 set(COMMON_DIR ${CMAKE_PREFIX_PATH}/../include/common)
-set(JETSON_CAVE_TALK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Jetson-Comms)
+set(JETSON_CAVE_TALK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/CAVeTalk)
 set(CAVETALK_BUILD_DIR ${JETSON_CAVE_TALK_DIR}/CAVeTalk/build) 
 
 set(PROTO_DIR ${CAVETALK_BUILD_DIR}/CAVeTalk-cpp_protos)
