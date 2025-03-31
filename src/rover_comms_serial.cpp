@@ -95,7 +95,7 @@ CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port           = "",
                                        serial::parity_t parity           = serial::parity_none,
                                        serial::stopbits_t stopbits       = serial::stopbits_one,
                                        serial::flowcontrol_t flowcontrol = serial::flowcontrol_none) :
-    Serial(baudrate, timeout, bytesize, parity, stopbits, flowcontrol)
+    Serial(port, baudrate, timeout, bytesize, parity, stopbits, flowcontrol)
 {
     try
     {
