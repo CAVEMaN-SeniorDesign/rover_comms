@@ -88,7 +88,7 @@ namespace rover_comms
 //     }
 // }
 
-CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port           = "",
+CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port                 = "",
                                        const uint32_t baudrate                 = 1e6,
                                        const serial::Timeout timeout           = serial::Timeout::simpleTimeout(0),
                                        const serial::bytesize_t bytesize       = serial::eightbits,
@@ -169,6 +169,39 @@ CaveTalk_Error_t CaveTalkSerialPort::Receive(void *const data, const size_t size
         catch (const serial::IOException &e)
         {
         }
+    }
+
+    return error;
+}
+
+TalkerWrapper::TalkerWrapper(std::shared_ptr<CaveTalkSerialPort> serial_port) : serial_port_(serial_port), Talker(Send)
+{
+}
+
+CaveTalk_Error_t TalkerWrapper::Send(const void *const data, const size_t size)
+{
+    CaveTalk_Error_t error = CAVE_TALK_ERROR_NULL;
+
+    if (serial_port_)
+    {
+        error = serial_port_->Send(data, size);
+    }
+
+    return error;
+}
+
+ListenerWrapper::ListenerWrapper(std::shared_ptr<CaveTalkSerialPort> serial_port, std::shared_ptr<cave_talk::ListenerCallbacks> listener_callbacks) :
+    serial_port_(serial_port), Listener(Receive, listener_callbacks)
+{
+}
+
+CaveTalk_Error_t ListenerWrapper::Receive(void *const data, const size_t size, size_t *const bytes_received)
+{
+    CaveTalk_Error_t error = CAVE_TALK_ERROR_NULL;
+
+    if (serial_port_)
+    {
+        error = serial_port_->Receive(data, size, bytes_received);
     }
 
     return error;
