@@ -9,82 +9,109 @@ namespace rover_comms
 {
 
 // default parameters, overwritten by the settings in src/Serial_Config.xml
-std::string     port = "/dev/ttyUSB0";
-unsigned long   baud = 1000000;
-serial::Serial  new_serial;
-serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
+// std::string     port = "/dev/ttyUSB0";
+// unsigned long   baud = 1000000;
+// serial::Serial  new_serial;
+// serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
 
 // TODO move elsewhere
-bool getSerialConfig(std::string file)
-{
-    tinyxml2::XMLDocument doc;
-    tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
+// bool getSerialConfig(std::string file)
+// {
+//     tinyxml2::XMLDocument doc;
+//     tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
 
-    if (error != tinyxml2::XML_SUCCESS)
-    {
-        std::cout << "Serial Config error: " << file.c_str() << std::endl;
-        return false;
-    }
+//     if (error != tinyxml2::XML_SUCCESS)
+//     {
+//         std::cout << "Serial Config error: " << file.c_str() << std::endl;
+//         return false;
+//     }
 
-    tinyxml2::XMLElement *root = doc.FirstChildElement("Serial_Config");
-    if (!root)
-    {
-        std::cerr << "Missing <Serial_Config> root element" << std::endl;
-        return false;
-    }
+//     tinyxml2::XMLElement *root = doc.FirstChildElement("Serial_Config");
+//     if (!root)
+//     {
+//         std::cerr << "Missing <Serial_Config> root element" << std::endl;
+//         return false;
+//     }
 
-    tinyxml2::XMLElement *portElem = root->FirstChildElement("port");
-    if (portElem && portElem->GetText())
-    {
-        port = portElem->GetText();
-    }
-    else
-    {
-        std::cerr << "Using default port: " << port << std::endl;
-    }
+//     tinyxml2::XMLElement *portElem = root->FirstChildElement("port");
+//     if (portElem && portElem->GetText())
+//     {
+//         port = portElem->GetText();
+//     }
+//     else
+//     {
+//         std::cerr << "Using default port: " << port << std::endl;
+//     }
 
-    tinyxml2::XMLElement *baudElem = root->FirstChildElement("baud");
-    if (baudElem && baudElem->GetText())
-    {
-        baud = std::stoul(baudElem->GetText());
-    }
-    else
-    {
-        std::cerr << "Using default baud: " << baud << std::endl;
-    }
+//     tinyxml2::XMLElement *baudElem = root->FirstChildElement("baud");
+//     if (baudElem && baudElem->GetText())
+//     {
+//         baud = std::stoul(baudElem->GetText());
+//     }
+//     else
+//     {
+//         std::cerr << "Using default baud: " << baud << std::endl;
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
 // TODO move into constructor
-CaveTalk_Error_t init()
-{
-    std::string config_path      = ament_index_cpp::get_package_share_directory("rover_comms") + "/src/Serial_Config.xml";
-    bool        getConfigSuccess = getSerialConfig(config_path);
+// CaveTalk_Error_t init()
+// {
+//     std::string config_path      = ament_index_cpp::get_package_share_directory("rover_comms") + "/src/Serial_Config.xml";
+//     bool        getConfigSuccess = getSerialConfig(config_path);
 
+//     try
+//     {
+//         new_serial.setPort(port);     // non-blocking essentially just 0s timeout
+//         new_serial.setBaudrate(baud);
+//         new_serial.setTimeout(timeout);
+//         new_serial.close();
+//         new_serial.open();
+
+//         if (new_serial.isOpen())
+//         {
+//             std::cout << "Serial port opened successfully.\n";
+//             return CAVE_TALK_ERROR_NONE;
+//         }
+//         else
+//         {
+//             std::cerr << "Failed to open serial port.\n";
+//             return CAVE_TALK_ERROR_SOCKET_CLOSED;
+//         }
+//     }
+//     catch (const std::exception &e)
+//     {
+//         std::cerr << "Exception while initializing serial: " << e.what() << std::endl;
+//         return CAVE_TALK_ERROR_SOCKET_CLOSED;
+//     }
+// }
+
+CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port   = "",
+    uint32_t baudrate         = 9600,
+    Timeout timeout           = Timeout(),
+    bytesize_t bytesize       = eightbits,
+    parity_t parity           = parity_none,
+    stopbits_t stopbits       = stopbits_one,
+    flowcontrol_t flowcontrol = flowcontrol_none) : Serial(baudrate, timeout, bytesize, parity, stopbits, flowcontrol)
+{
     try
     {
-        new_serial.setPort(port);     // non-blocking essentially just 0s timeout
-        new_serial.setBaudrate(baud);
-        new_serial.setTimeout(timeout);
-        new_serial.close();
-        new_serial.open();
+        open();
 
-        if (new_serial.isOpen())
+        if (isOpen())
         {
-            std::cout << "Serial port opened successfully.\n";
-            return CAVE_TALK_ERROR_NONE;
+            std::cout << "Serial port opened successfully." << std::endl;
         }
         else
         {
-            std::cerr << "Failed to open serial port.\n";
-            return CAVE_TALK_ERROR_SOCKET_CLOSED;
+            std::cerr << "Failed to open serial port." << std::endl;
         }
     }
     catch (const std::exception &e)
     {
         std::cerr << "Exception while initializing serial: " << e.what() << std::endl;
-        return CAVE_TALK_ERROR_SOCKET_CLOSED;
     }
 }
 
