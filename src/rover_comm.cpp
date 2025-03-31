@@ -50,8 +50,6 @@ std::string RoverComm::CaveTalk_ErrorToString(CaveTalk_Error_t error)
     }
 }
 
-
-
 void RoverComm::listen_callback()
 {
     if (listener)
@@ -60,7 +58,7 @@ void RoverComm::listen_callback()
 
         if (CAVE_TALK_ERROR_NONE != error)
         {
-            RCLCPP_INFO(this->get_logger(), "Listener error %s", CaveTalk_ErrorToString(error));
+            RCLCPP_INFO(this->get_logger(), "Listener error %s", CaveTalk_ErrorToString(error).c_str());
         }
     }
     else
