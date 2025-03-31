@@ -35,7 +35,7 @@ find_package(rover_interfaces REQUIRED)
 find_package(Catch2 3 REQUIRED)
 find_package(serial REQUIRED)
 
-add_library(new_serial STATIC src/new_serial.cpp)
+add_library(new_serial STATIC src/rover_comms_serial.cpp)
 ament_target_dependencies(new_serial rclcpp std_msgs serial ament_index_cpp)
 
 target_include_directories(new_serial
