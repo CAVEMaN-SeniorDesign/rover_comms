@@ -26,8 +26,6 @@ set(CAVEHEADER_DIR ${CAVETALK_DIR}/lib/c++/inc)
 set(CAVECOMMON_DIR ${CAVETALK_DIR}/lib/common/inc)
 set(CATCH_DIR /usr/local/include)
 
-add_subdirectory(${JETSON_CAVE_TALK_DIR})
-
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED) 
