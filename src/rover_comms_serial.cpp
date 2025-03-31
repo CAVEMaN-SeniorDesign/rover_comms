@@ -89,12 +89,12 @@ namespace rover_comms
 // }
 
 CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port           = "",
-                                       uint32_t baudrate                 = 1e6,
-                                       serial::Timeout timeout           = serial::Timeout::simpleTimeout(0),
-                                       serial::bytesize_t bytesize       = serial::eightbits,
-                                       serial::parity_t parity           = serial::parity_none,
-                                       serial::stopbits_t stopbits       = serial::stopbits_one,
-                                       serial::flowcontrol_t flowcontrol = serial::flowcontrol_none) :
+                                       const uint32_t baudrate                 = 1e6,
+                                       const serial::Timeout timeout           = serial::Timeout::simpleTimeout(0),
+                                       const serial::bytesize_t bytesize       = serial::eightbits,
+                                       const serial::parity_t parity           = serial::parity_none,
+                                       const serial::stopbits_t stopbits       = serial::stopbits_one,
+                                       const serial::flowcontrol_t flowcontrol = serial::flowcontrol_none) :
     Serial(port, baudrate, timeout, bytesize, parity, stopbits, flowcontrol)
 {
     try
