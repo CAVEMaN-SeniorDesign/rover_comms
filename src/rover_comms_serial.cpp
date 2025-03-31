@@ -1,18 +1,14 @@
 #include "rover_comms_serial.hpp"
 
+#include <cstdint>
 #include <iostream>
+#include <string>
 
 #include "cave_talk.h"
 #include "serial/serial.h"
 
 namespace rover_comms
 {
-
-// default parameters, overwritten by the settings in src/Serial_Config.xml
-// std::string     port = "/dev/ttyUSB0";
-// unsigned long   baud = 1000000;
-// serial::Serial  new_serial;
-// serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
 
 // TODO move elsewhere
 // bool getSerialConfig(std::string file)
@@ -56,54 +52,26 @@ namespace rover_comms
 //     return true;
 // }
 
-// TODO move into constructor
-// CaveTalk_Error_t init()
-// {
-//     std::string config_path      = ament_index_cpp::get_package_share_directory("rover_comms") + "/src/Serial_Config.xml";
-//     bool        getConfigSuccess = getSerialConfig(config_path);
+static const uint32_t kDefaultBaudrate = 1e6U;
+static serial::Serial serial_port("",
+                                  kDefaultBaudrate,
+                                  serial::Timeout::simpleTimeout(0),
+                                  serial::eightbits,
+                                  serial::parity_none,
+                                  serial::stopbits_one,
+                                  serial::flowcontrol_none);
 
-//     try
-//     {
-//         new_serial.setPort(port);     // non-blocking essentially just 0s timeout
-//         new_serial.setBaudrate(baud);
-//         new_serial.setTimeout(timeout);
-//         new_serial.close();
-//         new_serial.open();
-
-//         if (new_serial.isOpen())
-//         {
-//             std::cout << "Serial port opened successfully.\n";
-//             return CAVE_TALK_ERROR_NONE;
-//         }
-//         else
-//         {
-//             std::cerr << "Failed to open serial port.\n";
-//             return CAVE_TALK_ERROR_SOCKET_CLOSED;
-//         }
-//     }
-//     catch (const std::exception &e)
-//     {
-//         std::cerr << "Exception while initializing serial: " << e.what() << std::endl;
-//         return CAVE_TALK_ERROR_SOCKET_CLOSED;
-//     }
-// }
-
-CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port                 = "",
-                                       const uint32_t baudrate                 = 1e6,
-                                       const serial::Timeout timeout           = serial::Timeout::simpleTimeout(0),
-                                       const serial::bytesize_t bytesize       = serial::eightbits,
-                                       const serial::parity_t parity           = serial::parity_none,
-                                       const serial::stopbits_t stopbits       = serial::stopbits_one,
-                                       const serial::flowcontrol_t flowcontrol = serial::flowcontrol_none) :
-    Serial(port, baudrate, timeout, bytesize, parity, stopbits, flowcontrol)
+void SerialStart(const std::string &port, const uint32_t baudrate)
 {
     try
     {
-        open();
+        SerialSetPort(port);
+        SerialSetBaudrate(baudrate);
+        serial_port.open();
 
-        if (isOpen())
+        if (serial_port.isOpen())
         {
-            flush();
+            serial_port.flush();
 
             std::cout << "Serial port opened successfully." << std::endl;
         }
@@ -118,7 +86,7 @@ CaveTalkSerialPort::CaveTalkSerialPort(const std::string &port                 =
     }
 }
 
-CaveTalkSerialPort::~CaveTalkSerialPort(void)
+void SerialStop(void)
 {
     std::cout << "DESTRUCTOR CALLED" << std::endl;
 
@@ -129,7 +97,22 @@ CaveTalkSerialPort::~CaveTalkSerialPort(void)
     }
 }
 
-CaveTalk_Error_t CaveTalkSerialPort::Send(const void *const data, const size_t size)
+void SerialSetPort(const std::string &port)
+{
+    serial_port.setPort(port);
+
+    if (serial_port.isOpen())
+    {
+        serial_port.flush();
+    }
+}
+
+void SerialSetBaudrate(const uint32_t baudrate)
+{
+    serial_port.setBaudrate(baudrate);
+}
+
+CaveTalk_Error_t SerialSend(const void *const data, const size_t size)
 {
     CaveTalk_Error_t error = CAVE_TALK_ERROR_SOCKET_CLOSED;
 
@@ -154,7 +137,7 @@ CaveTalk_Error_t CaveTalkSerialPort::Send(const void *const data, const size_t s
     return error;
 }
 
-CaveTalk_Error_t CaveTalkSerialPort::Receive(void *const data, const size_t size, size_t *const bytes_received)
+CaveTalk_Error_t SerialReceive(void *const data, const size_t size, size_t *const bytes_received)
 {
     CaveTalk_Error_t error = CAVE_TALK_ERROR_SOCKET_CLOSED;
 
@@ -169,39 +152,6 @@ CaveTalk_Error_t CaveTalkSerialPort::Receive(void *const data, const size_t size
         catch (const serial::IOException &e)
         {
         }
-    }
-
-    return error;
-}
-
-TalkerWrapper::TalkerWrapper(std::shared_ptr<CaveTalkSerialPort> serial_port) : serial_port_(serial_port), Talker(Send)
-{
-}
-
-CaveTalk_Error_t TalkerWrapper::Send(const void *const data, const size_t size)
-{
-    CaveTalk_Error_t error = CAVE_TALK_ERROR_NULL;
-
-    if (serial_port_)
-    {
-        error = serial_port_->Send(data, size);
-    }
-
-    return error;
-}
-
-ListenerWrapper::ListenerWrapper(std::shared_ptr<CaveTalkSerialPort> serial_port, std::shared_ptr<cave_talk::ListenerCallbacks> listener_callbacks) :
-    serial_port_(serial_port), Listener(Receive, listener_callbacks)
-{
-}
-
-CaveTalk_Error_t ListenerWrapper::Receive(void *const data, const size_t size, size_t *const bytes_received)
-{
-    CaveTalk_Error_t error = CAVE_TALK_ERROR_NULL;
-
-    if (serial_port_)
-    {
-        error = serial_port_->Receive(data, size, bytes_received);
     }
 
     return error;

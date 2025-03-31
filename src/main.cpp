@@ -1,8 +1,11 @@
 #include "rover_comms_listener.hpp"
+#include "rover_comms_serial.hpp"
 
 void signalHandler(int signum)
 {
     std::cout << "\nInterrupt signal (" << signum << ") received. Exiting..." << std::endl;
+
+    SerialStop();
 }
 
 int main(int argc, char **argv)
@@ -13,10 +16,10 @@ int main(int argc, char **argv)
     auto                                rover_node      = std::make_shared<RoverComm>();
     std::shared_ptr<RoverCommsListener> listenCallbacks = std::make_shared<RoverCommsListener>(rover_node);
 
-    rover_comms::CaveTalkSerialPort cave_talk_serial_port();
+    SerialStart("/dev/ttyUSB0", 1e6U);
 
-    rover_node->talker   = std::make_shared<rover_comms::TalkerWrapper>(cave_talk_serial_port);
-    rover_node->listener = std::make_shared<rover_comms::ListenerWrapper>(cave_talk_serial_port, listenCallbacks);
+    rover_node->talker   = std::make_shared<cave_talk::Talker>(SerialSend);
+    rover_node->listener = std::make_shared<cave_talk::Listener>(SerialReceive, listenCallbacks);
 
     rclcpp::spin(rover_node);
     rclcpp::shutdown();
