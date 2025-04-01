@@ -76,6 +76,7 @@ private:
     bool openAndSendConfigMotor(std::string file);
     bool readCameraMovementConfig(std::string file);
     bool sendCameraMovement();
+    bool checkXMLPositiveValue(std::string value);
 
     // sub for /cmd_vel_joy topics and publish to joystick topic
     rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;

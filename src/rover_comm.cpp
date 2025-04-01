@@ -105,6 +105,7 @@ void RoverComm::cam_move_callback(){
         double new_pan = profiles[camera_movement_profile_index_].cam_pan_radians[posIdx];
         double new_tilt = profiles[camera_movement_profile_index_].cam_tilt_radians[posIdx];
         talker->SpeakCameraMovement(new_pan, new_tilt);
+        RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_pan, new_tilt);
     }
     else{
         RCLCPP_INFO(this->get_logger(), "Waiting for camera movement to finish...");
@@ -313,6 +314,11 @@ bool RoverComm::openAndSendConfigEncoder(std::string file){
         return false;
     }
 
+    if(!RoverComm::checkXMLPositiveValue(config_encoder->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Not sending Config Motor, returning True early");
+        return true;
+    }
+
     for(int i = 0; i < 4; i++){
         encoders[i] = cave_talk::ConfigEncoder();
 
@@ -443,6 +449,11 @@ bool RoverComm::openAndSendConfigLog(std::string file){
         // std::cout << "Error parsing file: Couldn't find ConfigEncoder" << std::endl;
         return false;
     }
+
+    if(!RoverComm::checkXMLPositiveValue(config_log_xml->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Not sending Config Motor, returning True early");
+        return true;
+    }
     
     int extractResult = -1;
     
@@ -496,6 +507,11 @@ bool RoverComm::openAndSendConfigServoWheels(std::string file){
         RCLCPP_INFO(this->get_logger(), "Error finding ConfigServoWheels");
         // std::cout << "Error parsing file: Couldn't find ConfigServoWheels" << std::endl;
         return false;
+    }
+
+    if(!RoverComm::checkXMLPositiveValue(config_servo_wheels->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Not sending Config Motor, returning True early");
+        return true;
     }
 
     for(int i = 0; i < 4; i++){
@@ -655,6 +671,11 @@ bool RoverComm::openAndSendConfigServoCams(std::string file){
         RCLCPP_INFO(this->get_logger(), "Error finding ConfigServoCams");
         // std::cout << "Error parsing file: Couldn't find ConfigServoCams" << std::endl;
         return false;
+    }
+
+    if(!RoverComm::checkXMLPositiveValue(config_servo_cams->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Not sending Config Motor, returning True early");
+        return true;
     }
 
     for(int i = 0; i < 2; i++){
@@ -835,6 +856,11 @@ bool RoverComm::openAndSendConfigMotor(std::string file){
         RCLCPP_INFO(this->get_logger(), "Error finding ConfigMotor");
         // std::cout << "Error parsing file: Couldn't find ConfigMotor" << std::endl;
         return false;
+    }
+
+    if(!RoverComm::checkXMLPositiveValue(config_motor->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Not sending Config Motor, returning True early");
+        return true;
     }
 
     for(int i = 0; i < 4; i++){
@@ -1022,4 +1048,12 @@ bool RoverComm::readCameraMovementConfig(std::string file){
     
     return true;
 
+}
+
+bool RoverComm::checkXMLPositiveValue(std::string value){
+    std::string posValues[] = {"True", "true", "T", "t", "y", "Y", "yes", "YES", "TRUE", "Yes", "1", "ON", "on", "On"};
+    for (std::string posVal : posValues){
+        if(value == posVal) return true;
+    }
+    return false;
 }

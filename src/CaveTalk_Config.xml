@@ -67,16 +67,16 @@
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>0.0625</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Cam_Pan>
         <Servo_Cam_Tilt>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>0.125</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Cam_Tilt>
     </ConfigServoCams>
