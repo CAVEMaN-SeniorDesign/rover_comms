@@ -102,11 +102,11 @@ private:
     struct CameraMovement profiles[5];
     int camera_movement_profile_length_ = 0;
     int camera_movement_profile_index_ = 0;
-    std::chrono::time_point<std::chrono::steady_clock> cam_move_last_move_time_;
 
     // button sw-debouncing with a .5sec timeout
     rclcpp::Time last_lights_toggle_ = this->get_clock()->now();
     rclcpp::Time last_arm_toggle_ = this->get_clock()->now();
+    rclcpp::Time cam_move_last_move_time_ = this->get_clock()->now();
     double toggle_button_timeout_ = 0.5; // half-second time-out
 
     // // serial params, can be modified in rover_comms/src/Serial_Config.xml
