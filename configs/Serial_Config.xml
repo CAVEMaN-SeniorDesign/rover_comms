@@ -1,0 +1,5 @@
+<Serial_Config>
+    <!--Will add to C++ code to dynamically try all ports and automatically select 1-->
+    <port>/dev/ttyUSB0</port> <!--/dev/ttyTHS1, /dev/ttyUSB0, or /dev/ttyUSB1-->
+    <baud>1000000</baud>
+</Serial_Config>
