@@ -83,6 +83,7 @@ private:
     bool first_talk_; // bool to assist syncing with MCU
 
     // button sw-debouncing with a .5sec timeout
+    rclcpp::Time last_speak_movement_ = this->get_clock()->now();
     rclcpp::Time last_lights_toggle_ = this->get_clock()->now();
     rclcpp::Time last_arm_toggle_ = this->get_clock()->now();
     double toggle_button_timeout_ = 0.5; // half-second time-out

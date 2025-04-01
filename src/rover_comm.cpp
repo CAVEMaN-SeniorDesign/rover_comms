@@ -171,12 +171,13 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
         }
         
 
-        if (first_log || (v != prev_v_ || omega != prev_omega_)) {
+        if ((first_log || (v != prev_v_ || omega != prev_omega_)) || (this->get_clock()->now() - last_speak_movement_).seconds() > 0.75) {
             first_log = false;
 
             std::string command_vel_msg = "Linear_Vel: " + std::to_string(v) + ", Angular Vel: " + std::to_string(omega);
             //MARK: add error checking
             CaveTalk_Error_t error_Movement = talker->SpeakMovement(v, omega);
+            last_speak_movement_ = this->get_clock()->now();
             
             if (error_Movement != CAVE_TALK_ERROR_NONE){
                 std::string error_Movement_str = CaveTalk_ErrorToString(error_Movement);
