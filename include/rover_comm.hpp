@@ -99,7 +99,7 @@ private:
     bool first_talk_; // bool to assist syncing with MCU
 
     // camera movement vars
-    struct CameraMovement profiles[5];
+    struct CameraMovement profiles_[5];
     int camera_movement_profile_length_ = 0;
     int camera_movement_profile_index_ = 0;
 
