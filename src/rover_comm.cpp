@@ -98,6 +98,8 @@ void RoverComm::cam_move_callback(){
 
         RCLCPP_INFO(this->get_logger(), "posIdx: %f", posIdx);
         RCLCPP_INFO(this->get_logger(), "posDur: %f", posDuration);
+        RCLCPP_INFO(this->get_logger(), "numPos: %f", profiles_[camera_movement_profile_index_].length);
+
 
 
         if (time_elapsed >= posDuration){
