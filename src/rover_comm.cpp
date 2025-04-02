@@ -93,30 +93,31 @@ void RoverComm::cam_move_callback(){
 
     if(arm_toggle_){
         double time_elapsed = (this->get_clock()->now() - cam_move_last_move_time_).seconds();
-        int posIdx = profiles_[camera_movement_profile_index_].index;
-        int posDuration = profiles_[camera_movement_profile_index_].durations[posIdx];
+        struct CameraMovement curr_profile = profiles_[camera_movement_profile_index_];
 
-        RCLCPP_INFO(this->get_logger(), "posIdx: %f", posIdx);
-        RCLCPP_INFO(this->get_logger(), "posDur: %f", posDuration);
-        RCLCPP_INFO(this->get_logger(), "numPos: %f", profiles_[camera_movement_profile_index_].length);
-
-
+        int posIdx = curr_profile.index;
+        double posDuration = curr_profile.durations[posIdx];
 
         if (time_elapsed >= posDuration){
+            RCLCPP_INFO(this->get_logger(), "posIdx: %f", posIdx);
+            RCLCPP_INFO(this->get_logger(), "posDur: %f", posDuration);
+            RCLCPP_INFO(this->get_logger(), "numPos: %f", curr_profile.length);
+
             posIdx++;
-            if(posIdx >= profiles_[camera_movement_profile_index_].length){
+            if(posIdx >= curr_profile.length){
                 posIdx = 0;
             }
-            profiles_[camera_movement_profile_index_].index = posIdx;
 
+            curr_profile.index = posIdx;
             cam_move_last_move_time_ = this->get_clock()->now();
-            double new_pan = profiles_[camera_movement_profile_index_].cam_pan_radians[posIdx];
-            double new_tilt = profiles_[camera_movement_profile_index_].cam_tilt_radians[posIdx];
+            double new_pan = curr_profile.cam_pan_radians[posIdx];
+            double new_tilt = curr_profile.cam_tilt_radians[posIdx];
             talker->SpeakCameraMovement(new_pan, new_tilt);
             RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_pan, new_tilt);
+            profiles_[camera_movement_profile_index_] = curr_profile;
         }
         else{
-            RCLCPP_INFO(this->get_logger(), "Waiting for camera movement to finish...");
+            // RCLCPP_INFO(this->get_logger(), "Waiting for camera movement to finish...");
         }
     }
 }
@@ -179,6 +180,29 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             double l_joy = msg->axes[1];
             omega = msg->axes[2]; //powerA Steering with right joy
             v = (l_joy);
+        }
+
+        if((msg->buttons[6] || msg->buttons[7]) && ((this->get_clock()->now() - cam_move_profile_button_).seconds() > toggle_button_timeout_)){
+            if(msg->buttons[6] && msg->buttons[7]){
+                //do nothing
+            }
+            else if(msg->buttons[6]){
+                camera_movement_profile_index_--;
+            }
+            else{
+                camera_movement_profile_index_++;
+            }
+
+            if(camera_movement_profile_index_ < 0){
+                camera_movement_profile_index_ = camera_movement_profile_length_ - 1;
+            }
+            else if(camera_movement_profile_index_ >= camera_movement_profile_length_){
+                camera_movement_profile_index_ = 0;
+            }
+
+            RCLCPP_INFO(this->get_logger(), "Camera Movement Profile Index: %d", camera_movement_profile_index_);
+
+            cam_move_profile_button_ = this->get_clock()->now();
         }
 
         if(msg->buttons[4] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_)){
@@ -1016,7 +1040,7 @@ bool RoverComm::readCameraMovementConfig(std::string file){
 
     int idx = 0;
     std::string durationTime = "duration";
-    double durationTimeDouble = 2;
+    double durationTimeDouble = 2.0;
     double cam_pan_rad_ref;
     double cam_tilt_rad_ref;
     int extractResult = -1;
@@ -1042,8 +1066,8 @@ bool RoverComm::readCameraMovementConfig(std::string file){
                 extractResult = cam_tilt_node->QueryDoubleText(&cam_tilt_rad_ref);
 
                 if (extractResult == 0) {
-                    new_profile.cam_pan_radians[posIdx] = cam_tilt_rad_ref;
-                    RCLCPP_INFO(this->get_logger(), "Cam Tilt Rad: %f",new_profile.cam_pan_radians[posIdx]);
+                    new_profile.cam_tilt_radians[posIdx] = cam_tilt_rad_ref;
+                    RCLCPP_INFO(this->get_logger(), "Cam Tilt Rad: %f",new_profile.cam_tilt_radians[posIdx]);
                     // std::cout << cam_tilt_rad_ref << std::endl;
                 }
             }
@@ -1067,6 +1091,8 @@ bool RoverComm::readCameraMovementConfig(std::string file){
         profiles_[idx] = new_profile;
         idx++;
     }
+
+    camera_movement_profile_length_ = idx;
     RCLCPP_INFO(this->get_logger(), "Profiles_: %d", idx);
     
     return true;

@@ -39,7 +39,7 @@
 
 struct CameraMovement
 {
-    static const int maxLength = 10;
+    static const int maxLength = 20;
     int length;
     int index = 0;
     double cam_pan_radians[maxLength] = {0U};
@@ -107,6 +107,7 @@ private:
     rclcpp::Time last_lights_toggle_ = this->get_clock()->now();
     rclcpp::Time last_arm_toggle_ = this->get_clock()->now();
     rclcpp::Time cam_move_last_move_time_ = this->get_clock()->now();
+    rclcpp::Time cam_move_profile_button_ = this->get_clock()->now();
     double toggle_button_timeout_ = 0.5; // half-second time-out
 
     // // serial params, can be modified in rover_comms/src/Serial_Config.xml
