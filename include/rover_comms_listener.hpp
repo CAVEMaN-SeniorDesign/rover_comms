@@ -2,6 +2,7 @@
 #define ROVER_COMM_LISTENER_HPP
 
 #include "rover_comm.hpp"
+#include <chrono>
 
 /*Common ports that are assigned on default (we should implement automatic port find and selection):
     /dev/ttyTHS1 - Jetson Nano built in UART pins on pin 8 (TX) and pin 10 (RX)
@@ -12,6 +13,13 @@
 class RoverCommsListener : public cave_talk::ListenerCallbacks
 {
     public:
+        double q0_                                                       = 1.0;
+        double q1_                                                       = 0.0;
+        double q2_                                                       = 0.0;
+        double q3_                                                       = 0.0;
+        std::chrono::time_point<std::chrono::steady_clock> prev_time_pt_ = std::chrono::steady_clock::now();
+
+
         RoverCommsListener(std::shared_ptr<RoverComm> node); //possibly need "rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_ptr" instead
         void HearOogaBooga(const cave_talk::Say ooga_booga) override;
         void HearMovement(const CaveTalk_MetersPerSecond_t speed, const CaveTalk_RadiansPerSecond_t turn_rate) override;
@@ -25,6 +33,7 @@ class RoverCommsListener : public cave_talk::ListenerCallbacks
         void HearConfigLog(const cave_talk::LogLevel log_level) override;
         void HearOdometry(const cave_talk::Imu &IMU, const cave_talk::Encoder &encoder_wheel_0, const cave_talk::Encoder &encoder_wheel_1, const cave_talk::Encoder &encoder_wheel_2, const cave_talk::Encoder &encoder_wheel_3) override;
         void HearLog(const char *const log) override;
+        void MadgwickAHRSupdateIMU(double gx, double gy, double gz, double ax, double ay, double az, std::chrono::milliseconds dt);
 
     private:
         std::shared_ptr<RoverComm> rover_comm_node_;

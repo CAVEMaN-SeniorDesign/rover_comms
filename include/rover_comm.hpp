@@ -23,6 +23,7 @@
 #include "cave_talk.h"
 #include "rover_comms_serial.hpp"
 #include "tinyxml2.h"
+#include <chrono>
 
 #define MAX_LINEAR_VEL  1.0
 #define MAX_ANGULAR_VEL 1.0
@@ -33,6 +34,16 @@
     /dev/ttyUSB1 - Sometimes it switches to this for some reason.
  */
 
+struct CameraMovement
+{
+    static const int maxLength = 10;
+    int length;
+    int index                          = 0;
+    double cam_pan_radians[maxLength]  = {0U};
+    double cam_tilt_radians[maxLength] = {0U};
+    double durations[maxLength]        = {0U};
+};
+
 class RoverComm : public rclcpp::Node
 {
     public:
@@ -42,6 +53,7 @@ class RoverComm : public rclcpp::Node
         std::shared_ptr<cave_talk::Listener> listener;
         rclcpp::TimerBase::SharedPtr speak_timer_;
         rclcpp::TimerBase::SharedPtr listen_timer_;
+        rclcpp::TimerBase::SharedPtr cam_move_timer_;
         rclcpp::Publisher<rover_interfaces::msg::Odomplot>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error);                   // map to string outputs
 
@@ -52,6 +64,7 @@ class RoverComm : public rclcpp::Node
         void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
         void listen_callback();
         void speak_callback();
+        void cam_move_callback();
         std::string gameControllerType();
         bool sendConfigs(std::string file);
         bool openAndSendConfigEncoder(std::string file);
@@ -59,6 +72,8 @@ class RoverComm : public rclcpp::Node
         bool openAndSendConfigServoWheels(std::string file);
         bool openAndSendConfigServoCams(std::string file);
         bool openAndSendConfigMotor(std::string file);
+        bool readCameraMovementConfig(std::string file);
+        bool sendCameraMovement();
 
         // sub for /cmd_vel_joy topics and publish to joystick topic
         rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
@@ -76,14 +91,26 @@ class RoverComm : public rclcpp::Node
         double max_cam_pan_radian_  = 6.2831853;
         double min_cam_tilt_radian_ = 0;
         double max_cam_tilt_radian_ = 6.2831853;
-        bool lights_toggle_;
-        bool arm_toggle_;
-        bool first_talk_ = true; // bool to assist syncing with MCU
+        bool lights_toggle_         = false;
+        bool arm_toggle_            = false;
+        bool first_talk_            = true; // bool to assist syncing with MCU
+
+        // camera movement vars
+        struct CameraMovement profiles[5];
+        int camera_movement_profile_length_ = 0;
+        int camera_movement_profile_index_  = 0;
+        std::chrono::time_point<std::chrono::steady_clock> cam_move_last_move_time_;
 
         // button sw-debouncing with a .5sec timeout
-        rclcpp::Time last_lights_toggle_ = this->get_clock()->now();
-        rclcpp::Time last_arm_toggle_    = this->get_clock()->now();
-        double toggle_button_timeout_    = 0.5; // half-second time-out
+        rclcpp::Time last_speak_movement_ = this->get_clock()->now();
+        rclcpp::Time last_lights_toggle_  = this->get_clock()->now();
+        rclcpp::Time last_arm_toggle_     = this->get_clock()->now();
+        double toggle_button_timeout_     = 0.5; // half-second time-out
+
+        // // serial params, can be modified in rover_comms/src/Serial_Config.xml
+        // std:string serial_port_ = "/dev/ttyTHS1";
+        // unsigned long serialBaud_ = 1000000;
+        // serial::Timeout timeout = serial::Timeout::simpleTimeout(0); // non-blocking
 };
 
 #endif // ROVER_COMM_HPP
