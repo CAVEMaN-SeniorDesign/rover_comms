@@ -74,6 +74,7 @@ class RoverComm : public rclcpp::Node
         bool openAndSendConfigMotor(std::string file);
         bool readCameraMovementConfig(std::string file);
         bool sendCameraMovement();
+        bool checkXMLPositiveValue(std::string value);
 
         // sub for /cmd_vel_joy topics and publish to joystick topic
         rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
@@ -96,15 +97,16 @@ class RoverComm : public rclcpp::Node
         bool first_talk_            = true; // bool to assist syncing with MCU
 
         // camera movement vars
-        struct CameraMovement profiles[5];
+        struct CameraMovement profiles_[5];
         int camera_movement_profile_length_ = 0;
         int camera_movement_profile_index_  = 0;
-        std::chrono::time_point<std::chrono::steady_clock> cam_move_last_move_time_;
 
         // button sw-debouncing with a .5sec timeout
         rclcpp::Time last_speak_movement_ = this->get_clock()->now();
         rclcpp::Time last_lights_toggle_  = this->get_clock()->now();
         rclcpp::Time last_arm_toggle_     = this->get_clock()->now();
+        rclcpp::Time cam_move_last_move_time_ = this->get_clock()->now();
+        rclcpp::Time cam_move_profile_button_ = this->get_clock()->now();
         double toggle_button_timeout_     = 0.5; // half-second time-out
 
         // // serial params, can be modified in rover_comms/src/Serial_Config.xml
