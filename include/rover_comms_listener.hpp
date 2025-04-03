@@ -19,7 +19,6 @@ public:
     double q3_ = 0.0;
     std::chrono::time_point<std::chrono::steady_clock> prev_time_pt_ = std::chrono::steady_clock::now();
 
-
     RoverCommsListener(std::shared_ptr<RoverComm> node); //possibly need "rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_ptr" instead
     void HearOogaBooga(const cave_talk::Say ooga_booga) override;
     void HearMovement(const CaveTalk_MetersPerSecond_t speed, const CaveTalk_RadiansPerSecond_t turn_rate) override;

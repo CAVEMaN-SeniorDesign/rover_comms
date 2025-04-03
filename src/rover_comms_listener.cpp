@@ -82,7 +82,7 @@ void RoverCommsListener::HearConfigLog(const cave_talk::LogLevel log_level)
 
 void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk::Encoder &encoder_wheel_0, const cave_talk::Encoder &encoder_wheel_1, const cave_talk::Encoder &encoder_wheel_2, const cave_talk::Encoder &encoder_wheel_3)
 {
-    auto msg = rover_interfaces::msg::Odomplot();
+    auto msg = rover_interfaces::msg::Encoders();
 
     msg.total_pulses_encoder_wheel_0 = encoder_wheel_0.total_pulses();
     msg.rate_rads_per_sec_encoder_wheel_0 = encoder_wheel_0.rate_radians_per_second();
@@ -96,12 +96,13 @@ void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk
     msg.total_pulses_encoder_wheel_3 = encoder_wheel_3.total_pulses();
     msg.rate_rads_per_sec_encoder_wheel_3 = encoder_wheel_3.rate_radians_per_second();
 
-    msg.x_accel_mpss = IMU.accel().x_meters_per_second_squared(); 
-    msg.y_accel_mpss = IMU.accel().y_meters_per_second_squared();
-    msg.z_accel_mpss = IMU.accel().z_meters_per_second_squared();
-    msg.roll_rads_per_sec = IMU.gyro().roll_radians_per_second();
-    msg.pitch_rads_per_sec = IMU.gyro().pitch_radians_per_second();
-    msg.yaw_rads_per_sec = IMU.gyro().yaw_radians_per_second();
+    // Removed to publish directly to imu topic
+    // msg.x_accel_mpss = IMU.accel().x_meters_per_second_squared(); 
+    // msg.y_accel_mpss = IMU.accel().y_meters_per_second_squared();
+    // msg.z_accel_mpss = IMU.accel().z_meters_per_second_squared();
+    // msg.roll_rads_per_sec = IMU.gyro().roll_radians_per_second();
+    // msg.pitch_rads_per_sec = IMU.gyro().pitch_radians_per_second();
+    // msg.yaw_rads_per_sec = IMU.gyro().yaw_radians_per_second();
 
     rover_comm_node_->odom_read_pub_->publish(msg);
 
@@ -199,4 +200,6 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
     q3_ *= recipNorm;
 
     // MARK: EXPORT TO RTAB
+
+
 }

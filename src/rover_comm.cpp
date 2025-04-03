@@ -10,7 +10,7 @@ RoverComm::RoverComm() : Node("rover_comm")
         "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1));
 
     // Odom publisher
-    odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Odomplot>(
+    odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Encoders>(
         "/odom_raw", 10);
 
     // Check for connected game controllers

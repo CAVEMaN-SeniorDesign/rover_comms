@@ -2,10 +2,11 @@
 #define ROVER_COMM_HPP
 
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/joy.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "rover_interfaces/msg/serial.hpp"
-#include "rover_interfaces/msg/odomplot.hpp"
+#include <sensor_msgs/msg/joy.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+#include "rover_interfaces/msg/encoders.hpp"
 #include <cmath>
 #include <algorithm>
 
@@ -54,7 +55,8 @@ public:
     rclcpp::TimerBase::SharedPtr speak_timer_;
     rclcpp::TimerBase::SharedPtr listen_timer_;
     rclcpp::TimerBase::SharedPtr cam_move_timer_;
-    rclcpp::Publisher<rover_interfaces::msg::Odomplot>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
+    rclcpp::Publisher<rover_interfaces::msg::Encoders>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_; // public to be accessed from callbacks
     std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
 
     bool looping = true;
@@ -75,7 +77,6 @@ private:
     bool sendCameraMovement();
 
     // sub for /cmd_vel_joy topics and publish to joystick topic
-    rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
     rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
 
     // Params
