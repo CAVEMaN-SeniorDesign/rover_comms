@@ -84,28 +84,28 @@ void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk
 {
     auto msg = rover_interfaces::msg::Odomplot();
 
-    msg.total_pulses_encoder_wheel_0 = encoder_wheel_0.total_pulses();
+    msg.total_pulses_encoder_wheel_0      = encoder_wheel_0.total_pulses();
     msg.rate_rads_per_sec_encoder_wheel_0 = encoder_wheel_0.rate_radians_per_second();
 
-    msg.total_pulses_encoder_wheel_1 = encoder_wheel_1.total_pulses();
+    msg.total_pulses_encoder_wheel_1      = encoder_wheel_1.total_pulses();
     msg.rate_rads_per_sec_encoder_wheel_1 = encoder_wheel_1.rate_radians_per_second();
 
-    msg.total_pulses_encoder_wheel_2 = encoder_wheel_2.total_pulses();
+    msg.total_pulses_encoder_wheel_2      = encoder_wheel_2.total_pulses();
     msg.rate_rads_per_sec_encoder_wheel_2 = encoder_wheel_2.rate_radians_per_second();
 
-    msg.total_pulses_encoder_wheel_3 = encoder_wheel_3.total_pulses();
+    msg.total_pulses_encoder_wheel_3      = encoder_wheel_3.total_pulses();
     msg.rate_rads_per_sec_encoder_wheel_3 = encoder_wheel_3.rate_radians_per_second();
 
-    msg.x_accel_mpss = IMU.accel().x_meters_per_second_squared(); 
-    msg.y_accel_mpss = IMU.accel().y_meters_per_second_squared();
-    msg.z_accel_mpss = IMU.accel().z_meters_per_second_squared();
-    msg.roll_rads_per_sec = IMU.gyro().roll_radians_per_second();
+    msg.x_accel_mpss       = IMU.accel().x_meters_per_second_squared();
+    msg.y_accel_mpss       = IMU.accel().y_meters_per_second_squared();
+    msg.z_accel_mpss       = IMU.accel().z_meters_per_second_squared();
+    msg.roll_rads_per_sec  = IMU.gyro().roll_radians_per_second();
     msg.pitch_rads_per_sec = IMU.gyro().pitch_radians_per_second();
-    msg.yaw_rads_per_sec = IMU.gyro().yaw_radians_per_second();
+    msg.yaw_rads_per_sec   = IMU.gyro().yaw_radians_per_second();
 
     rover_comm_node_->odom_read_pub_->publish(msg);
 
-    MadgwickAHRSupdateIMU(  
+    MadgwickAHRSupdateIMU(
         IMU.accel().x_meters_per_second_squared(),
         IMU.accel().y_meters_per_second_squared(),
         IMU.accel().z_meters_per_second_squared(),
@@ -113,7 +113,7 @@ void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk
         IMU.gyro().pitch_radians_per_second(),
         IMU.gyro().yaw_radians_per_second(),
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - prev_time_pt_)
-    );
+        );
 
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard odom msgs");
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Quatw: ", q0_, ", Quatx: ", q1_, ", Quaty: ", q2_, ", Quatz: ", q3_);
@@ -125,7 +125,7 @@ void RoverCommsListener::HearLog(const char *const log)
 }
 
 void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
-    double ax, double ay, double az, std::chrono::milliseconds dt)
+                                               double ax, double ay, double az, std::chrono::milliseconds dt)
 {
     double beta = 0.1;
     double d;
@@ -148,9 +148,9 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
     {
         // Normalize accelerometer measurement
         recipNorm = 1.0 / std::sqrt(ax * ax + ay * ay + az * az);
-        ax *= recipNorm;
-        ay *= recipNorm;
-        az *= recipNorm;
+        ax       *= recipNorm;
+        ay       *= recipNorm;
+        az       *= recipNorm;
 
         // Auxiliary variables to avoid repeated arithmetic
         _2q0 = 2.0 * q0_;
@@ -168,15 +168,15 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
         q3q3 = q3_ * q3_;
 
         // Gradient descent algorithm corrective step
-        s0 = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay;
-        s1 = _4q1 * q3q3 - _2q3 * ax + 4.0 * q0q0 * q1_ - _2q0 * ay - _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
-        s2 = 4.0 * q0q0 * q2_ + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay - _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
-        s3 = 4.0 * q1q1 * q3_ - _2q1 * ax + 4.0 * q2q2 * q3_ - _2q2 * ay;
+        s0        = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay;
+        s1        = _4q1 * q3q3 - _2q3 * ax + 4.0 * q0q0 * q1_ - _2q0 * ay - _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
+        s2        = 4.0 * q0q0 * q2_ + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay - _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
+        s3        = 4.0 * q1q1 * q3_ - _2q1 * ax + 4.0 * q2q2 * q3_ - _2q2 * ay;
         recipNorm = 1.0 / std::sqrt((s0 * s0) + (s1 * s1) + (s2 * s2) + (s3 * s3)); // normalize step magnitude
-        s0 *= recipNorm;
-        s1 *= recipNorm;
-        s2 *= recipNorm;
-        s3 *= recipNorm;
+        s0       *= recipNorm;
+        s1       *= recipNorm;
+        s2       *= recipNorm;
+        s3       *= recipNorm;
 
         // Apply feedback step
         qDot1 -= beta * s0;
@@ -193,10 +193,10 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
 
     // Normalize quaternion
     recipNorm = 1.0 / std::sqrt((q0_ * q0_) + (q1_ * q1_) + (q2_ * q2_) + (q3_ * q3_));
-    q0_ *= recipNorm;
-    q1_ *= recipNorm;
-    q2_ *= recipNorm;
-    q3_ *= recipNorm;
+    q0_      *= recipNorm;
+    q1_      *= recipNorm;
+    q2_      *= recipNorm;
+    q3_      *= recipNorm;
 
     // MARK: EXPORT TO RTAB
 }

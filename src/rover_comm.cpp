@@ -19,80 +19,93 @@ RoverComm::RoverComm() : Node("rover_comm")
     speak_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
         std::bind(&RoverComm::speak_callback, this)
-    );
-    
+        );
+
     listen_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(10),
         std::bind(&RoverComm::listen_callback, this)
-    );
+        );
 
     cam_move_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(20),
         std::bind(&RoverComm::cam_move_callback, this)
-    );
-    
+        );
+
 }
 
-RoverComm::~RoverComm(){
+RoverComm::~RoverComm()
+{
 }
 
-std::string RoverComm::CaveTalk_ErrorToString(CaveTalk_Error_t error) {
-    switch (error) {
-        case CAVE_TALK_ERROR_NONE: return "CAVE_TALK_ERROR_NONE";
-        case CAVE_TALK_ERROR_NULL: return "CAVE_TALK_ERROR_NULL";
-        case CAVE_TALK_ERROR_SIZE: return "CAVE_TALK_ERROR_SIZE";
-        case CAVE_TALK_ERROR_SOCKET_CLOSED: return "CAVE_TALK_ERROR_SOCKET_CLOSED";
-        case CAVE_TALK_ERROR_INCOMPLETE: return "CAVE_TALK_ERROR_INCOMPLETE";
-        case CAVE_TALK_ERROR_CRC: return "CAVE_TALK_ERROR_CRC";
-        case CAVE_TALK_ERROR_VERSION: return "CAVE_TALK_ERROR_VERSION";
-        case CAVE_TALK_ERROR_ID: return "CAVE_TALK_ERROR_ID";
-        case CAVE_TALK_ERROR_PARSE: return "CAVE_TALK_ERROR_PARSE";
-        default: return "UNKNOWN_ERROR";
+std::string RoverComm::CaveTalk_ErrorToString(CaveTalk_Error_t error)
+{
+    switch (error)
+    {
+    case CAVE_TALK_ERROR_NONE: return "CAVE_TALK_ERROR_NONE";
+    case CAVE_TALK_ERROR_NULL: return "CAVE_TALK_ERROR_NULL";
+    case CAVE_TALK_ERROR_SIZE: return "CAVE_TALK_ERROR_SIZE";
+    case CAVE_TALK_ERROR_SOCKET_CLOSED: return "CAVE_TALK_ERROR_SOCKET_CLOSED";
+    case CAVE_TALK_ERROR_INCOMPLETE: return "CAVE_TALK_ERROR_INCOMPLETE";
+    case CAVE_TALK_ERROR_CRC: return "CAVE_TALK_ERROR_CRC";
+    case CAVE_TALK_ERROR_VERSION: return "CAVE_TALK_ERROR_VERSION";
+    case CAVE_TALK_ERROR_ID: return "CAVE_TALK_ERROR_ID";
+    case CAVE_TALK_ERROR_PARSE: return "CAVE_TALK_ERROR_PARSE";
+    default: return "UNKNOWN_ERROR";
     }
 }
 
 
-void RoverComm::listen_callback() {
-    if (listener) {
+void RoverComm::listen_callback()
+{
+    if (listener)
+    {
         CaveTalk_Error_t error = listener->Listen();
         if (CAVE_TALK_ERROR_NONE != error)
         {
             RCLCPP_INFO(this->get_logger(), "Listener error %s", CaveTalk_ErrorToString(error).c_str());
         }
     }
-    else{
+    else
+    {
         RCLCPP_INFO(this->get_logger(), "Waiting for listener to be passed...");
     }
 }
 
-void RoverComm::speak_callback(){
-    if(talker && waiting_booga){ //if still waiting for booga, send more oogas
+void RoverComm::speak_callback()
+{
+    if (talker && waiting_booga) //if still waiting for booga, send more oogas
+    {
         RCLCPP_INFO(this->get_logger(), "Sending Ooga, awaiting Booga...");
         talker->SpeakOogaBooga(cave_talk::SAY_OOGA);
     }
-    else if(!talker){
-            RCLCPP_INFO(this->get_logger(), "Waiting for Speaker to be passed...");
+    else if (!talker)
+    {
+        RCLCPP_INFO(this->get_logger(), "Waiting for Speaker to be passed...");
     }
 }
 
-void RoverComm::cam_move_callback(){
+void RoverComm::cam_move_callback()
+{
     double time_elapsed = (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - cam_move_last_move_time_)).count() * .001;
-    int posIdx = profiles[camera_movement_profile_index_].index;
-    int posDuration = profiles[camera_movement_profile_index_].durations[posIdx];
+    int    posIdx       = profiles[camera_movement_profile_index_].index;
+    int    posDuration  = profiles[camera_movement_profile_index_].durations[posIdx];
 
-    if (time_elapsed >= posDuration){
+    if (time_elapsed >= posDuration)
+    {
         posIdx++;
-        if(posIdx >= profiles[camera_movement_profile_index_].length){
+        if (posIdx >= profiles[camera_movement_profile_index_].length)
+        {
             posIdx = 0;
         }
         profiles[camera_movement_profile_index_].index = posIdx;
 
         cam_move_last_move_time_ = std::chrono::steady_clock::now();
-        double new_pan = profiles[camera_movement_profile_index_].cam_pan_radians[posIdx];
+        double new_pan  = profiles[camera_movement_profile_index_].cam_pan_radians[posIdx];
         double new_tilt = profiles[camera_movement_profile_index_].cam_tilt_radians[posIdx];
         talker->SpeakCameraMovement(new_pan, new_tilt);
     }
-    else{
+    else
+    {
         RCLCPP_INFO(this->get_logger(), "Waiting for camera movement to finish...");
     }
 }
@@ -100,108 +113,128 @@ void RoverComm::cam_move_callback(){
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-    if(first_talk_){
+    if (first_talk_)
+    {
         bool success = sendConfigs("/root/ros2_ws/src/rover_comms/src/CaveTalk_Config.xml");
-        if(success){
+        if (success)
+        {
             RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: True");
-        }else{
+        }
+        else
+        {
             RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: False");
         }
         first_talk_ = false;
     }
 
-    if(talker && !(waiting_booga)){
-        static bool first_log = true; // static persists between calls
-	    static bool first_log_cams = true;
+    if (talker && !(waiting_booga))
+    {
+        static bool first_log      = true; // static persists between calls
+        static bool first_log_cams = true;
 
-        double v = 0;
+        double v     = 0;
         double omega = 0;
 
-        if(this->game_controller_type_=="xbox"){
+        if (this->game_controller_type_ == "xbox")
+        {
             // invert the values
             double r_trig = -msg->axes[4] + 1; // Default unpressed is 1.0, down to -1 fully pressed
             double l_trig = -msg->axes[5] + 1; //
-            omega = msg->axes[0]; // Angular velocity on joy 0
+            omega = msg->axes[0];              // Angular velocity on joy 0
 
             //left-rght is msg->axes[6], left is +
             //up-down is msg->axes[7], up is +
-            cam_pan_ += ((msg->axes[6])*3.1415926/32.0);
-            cam_tilt_ += ((msg->axes[7])*3.1415926/32.0);
+            cam_pan_  += ((msg->axes[6]) * 3.1415926 / 32.0);
+            cam_tilt_ += ((msg->axes[7]) * 3.1415926 / 32.0);
 
-            if(cam_pan_ < min_cam_pan_radian_){
+            if (cam_pan_ < min_cam_pan_radian_)
+            {
                 cam_pan_ = min_cam_pan_radian_;
             }
-            else if(cam_pan_ > max_cam_pan_radian_){
+            else if (cam_pan_ > max_cam_pan_radian_)
+            {
                 cam_pan_ = max_cam_pan_radian_;
             }
 
-            if(cam_tilt_ < min_cam_tilt_radian_){
+            if (cam_tilt_ < min_cam_tilt_radian_)
+            {
                 cam_tilt_ = min_cam_tilt_radian_;
             }
-            else if(cam_tilt_ > max_cam_tilt_radian_){
+            else if (cam_tilt_ > max_cam_tilt_radian_)
+            {
                 cam_tilt_ = max_cam_tilt_radian_;
             }
             v = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
         }
-        else{
+        else
+        {
             double l_joy = msg->axes[1];
             omega = msg->axes[2]; //powerA Steering with right joy
-            v = (l_joy);
+            v     = (l_joy);
         }
 
-        if(msg->buttons[4] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_)){
+        if (msg->buttons[4] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_))
+        {
             lights_toggle_ = !lights_toggle_; //toggle
             //MARK: add error checking
             CaveTalk_Error_t error_Lights = talker->SpeakLights(lights_toggle_);
 
-            if (error_Lights != CAVE_TALK_ERROR_NONE){
+            if (error_Lights != CAVE_TALK_ERROR_NONE)
+            {
                 std::string error_Lights_str = CaveTalk_ErrorToString(error_Lights);
                 RCLCPP_INFO(this->get_logger(), error_Lights_str.c_str());
             }
-	        RCLCPP_INFO(this->get_logger(), "Lights toggled");
+            RCLCPP_INFO(this->get_logger(), "Lights toggled");
             last_lights_toggle_ = this->get_clock()->now();
         }
 
-        if(msg->buttons[1] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_)){
+        if (msg->buttons[1] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_))
+        {
             arm_toggle_ = !arm_toggle_; //toggle
             //MARK: add error checking
             CaveTalk_Error_t error_arm = talker->SpeakArm(arm_toggle_);
 
-            if (error_arm != CAVE_TALK_ERROR_NONE){
+            if (error_arm != CAVE_TALK_ERROR_NONE)
+            {
                 std::string error_arm_str = CaveTalk_ErrorToString(error_arm);
                 RCLCPP_INFO(this->get_logger(), error_arm_str.c_str());
             }
 
-            if (arm_toggle_){
+            if (arm_toggle_)
+            {
                 RCLCPP_INFO(this->get_logger(), "Rover ARMED");
             }
-            else{
+            else
+            {
                 RCLCPP_INFO(this->get_logger(), "Rover DISARMED");
             }
 
             last_arm_toggle_ = this->get_clock()->now();
         }
-        
 
-        if ((first_log || (v != prev_v_ || omega != prev_omega_)) || (this->get_clock()->now() - last_speak_movement_).seconds() > 0.75) {
+
+        if ((first_log || (v != prev_v_ || omega != prev_omega_)) || (this->get_clock()->now() - last_speak_movement_).seconds() > 0.75)
+        {
             first_log = false;
 
             std::string command_vel_msg = "Linear_Vel: " + std::to_string(v) + ", Angular Vel: " + std::to_string(omega);
             //MARK: add error checking
             CaveTalk_Error_t error_Movement = talker->SpeakMovement(v, omega);
             last_speak_movement_ = this->get_clock()->now();
-            
-            if (error_Movement != CAVE_TALK_ERROR_NONE){
+
+            if (error_Movement != CAVE_TALK_ERROR_NONE)
+            {
                 std::string error_Movement_str = CaveTalk_ErrorToString(error_Movement);
                 RCLCPP_INFO(this->get_logger(), error_Movement_str.c_str());
             }
             RCLCPP_INFO(this->get_logger(), command_vel_msg.c_str());
 
-            prev_v_ = v;
+            prev_v_     = v;
             prev_omega_ = omega;
         }
 
-        if (first_log_cams || (cam_pan_ != prev_cam_pan_ || cam_tilt_ != prev_cam_tilt_)) {
+        if (first_log_cams || (cam_pan_ != prev_cam_pan_ || cam_tilt_ != prev_cam_tilt_))
+        {
             first_log_cams = false;
 
             std::string cmd_cam_msg = "Cam_Pan: "  + std::to_string(cam_pan_) + ", Cam_Tilt: " + std::to_string(cam_tilt_);
@@ -209,7 +242,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             talker->SpeakCameraMovement(cam_pan_, cam_tilt_);
             RCLCPP_INFO(this->get_logger(), cmd_cam_msg.c_str());
 
-            prev_cam_pan_ = cam_pan_;
+            prev_cam_pan_  = cam_pan_;
             prev_cam_tilt_ = cam_tilt_;
         }
 
@@ -1023,63 +1056,71 @@ bool RoverComm::openAndSendConfigMotor(std::string file)
         {
             extractResult = max_duty_cycle_percent_node->QueryDoubleText(&max_duty_cycle_percent);
 
-            if (extractResult == 0) {
+            if (extractResult == 0)
+            {
                 motor_wheels[i].set_max_duty_cycle_percentage(max_duty_cycle_percent);
                 RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", max_duty_cycle_percent);
                 // std::cout << max_duty_cycle_percent << std::endl;
-            }else{
+            }
+            else
+            {
                 std::cout << "Failed to extract max angle radian" << std::endl;
-            } 
+            }
         }
         else
         {
             motor_wheels[i].set_max_duty_cycle_percentage(-1);
         }
 
-        
+
     }
 
     talker->SpeakConfigMotor(motor_wheels[0], motor_wheels[1], motor_wheels[2], motor_wheels[3]);
     return true;
 }
 
-bool RoverComm::readCameraMovementConfig(std::string file){
- 
+bool RoverComm::readCameraMovementConfig(std::string file)
+{
+
     tinyxml2::XMLDocument doc;
-    tinyxml2::XMLError error = doc.LoadFile(file.c_str());
-    if (error != tinyxml2::XML_SUCCESS) {
+    tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
+    if (error != tinyxml2::XML_SUCCESS)
+    {
         RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
         // std::cout << "Open File Error" << std::endl;
         return false;
     }
 
     tinyxml2::XMLElement *root_xml = doc.FirstChildElement();
-    if (root_xml == nullptr) {
+    if (root_xml == nullptr)
+    {
         RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
         // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
         return false;
     }
 
     tinyxml2::XMLElement *cam_movements = root_xml->FirstChildElement("CameraMovement");
-    if (cam_movements == nullptr) {
+    if (cam_movements == nullptr)
+    {
         RCLCPP_INFO(this->get_logger(), "Error finding CameraMovement");
         // std::cout << "Error parsing file: Couldn't find ConfigEncoder" << std::endl;
         return false;
     }
 
-    int idx = 0;
+    int         idx          = 0;
     std::string durationTime = "duration";
-    double durationTimeDouble;
-    double cam_pan_rad_ref;
-    double cam_tilt_rad_ref;
-    int extractResult = -1;
-    for(tinyxml2::XMLElement *profile = cam_movements->FirstChildElement(); profile != NULL; profile = profile->NextSiblingElement())
+    double      durationTimeDouble;
+    double      cam_pan_rad_ref;
+    double      cam_tilt_rad_ref;
+    int         extractResult = -1;
+    for (tinyxml2::XMLElement *profile = cam_movements->FirstChildElement(); profile != NULL; profile = profile->NextSiblingElement())
     {
         int posIdx = 0;
-        for(tinyxml2::XMLElement *position = profile->FirstChildElement(); position != NULL; position = position->NextSiblingElement())
+        for (tinyxml2::XMLElement *position = profile->FirstChildElement(); position != NULL; position = position->NextSiblingElement())
         {
             extractResult = profile->QueryDoubleAttribute(durationTime.c_str(), &durationTimeDouble);
-            if (extractResult == 0) {
+            if (extractResult == 0)
+            {
                 profiles[idx].durations[posIdx] = durationTimeDouble;
                 RCLCPP_INFO(this->get_logger(), "Duration: %f", durationTimeDouble);
                 // std::cout << profiles[idx].duration << std::endl;
@@ -1090,7 +1131,8 @@ bool RoverComm::readCameraMovementConfig(std::string file){
             {
                 extractResult = cam_tilt_node->QueryDoubleText(&cam_tilt_rad_ref);
 
-                if (extractResult == 0) {
+                if (extractResult == 0)
+                {
                     profiles[idx].cam_pan_radians[posIdx] = cam_tilt_rad_ref;
                     // RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", cam_tilt_rad_ref);
                     // std::cout << cam_tilt_rad_ref << std::endl;
@@ -1102,7 +1144,8 @@ bool RoverComm::readCameraMovementConfig(std::string file){
             {
                 extractResult = cam_pan_node->QueryDoubleText(&cam_pan_rad_ref);
 
-                if (extractResult == 0) {
+                if (extractResult == 0)
+                {
                     profiles[idx].cam_pan_radians[posIdx] = cam_pan_rad_ref;
                     // RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", cam_pan_rad_ref);
                     // std::cout << cam_pan_rad_ref << std::endl;
@@ -1114,7 +1157,7 @@ bool RoverComm::readCameraMovementConfig(std::string file){
 
         idx++;
     }
-    
+
     return true;
 
 }
