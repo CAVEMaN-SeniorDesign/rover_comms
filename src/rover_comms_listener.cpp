@@ -38,45 +38,66 @@ void RoverCommsListener::HearOogaBooga(const cave_talk::Say ooga_booga)
 
 void RoverCommsListener::HearMovement(const CaveTalk_MetersPerSecond_t speed, const CaveTalk_RadiansPerSecond_t turn_rate)
 {
+    (void)speed;
+    (void)turn_rate;
     RCLCPP_INFO(rover_comm_node_->get_logger(), "wagu!?");
 }
 
 void RoverCommsListener::HearCameraMovement(const CaveTalk_Radian_t pan, const CaveTalk_Radian_t tilt)
 {
+    (void)pan;
+    (void)tilt;
     RCLCPP_INFO(rover_comm_node_->get_logger(), "maka-keega");
 }
 
 void RoverCommsListener::HearLights(const bool headlights)
 {
+    (void)headlights;
     RCLCPP_INFO(rover_comm_node_->get_logger(), "unk!");
 }
 
 void RoverCommsListener::HearConfigEncoder(const cave_talk::ConfigEncoder &encoder_wheel_0, const cave_talk::ConfigEncoder &encoder_wheel_1, const cave_talk::ConfigEncoder &encoder_wheel_2, const cave_talk::ConfigEncoder &encoder_wheel_3)
 {
+    (void)encoder_wheel_0;
+    (void)encoder_wheel_1;
+    (void)encoder_wheel_2;
+    (void)encoder_wheel_3;
 }
 
 void RoverCommsListener::HearArm(const bool arm)
 {
+    (void)arm;
     RCLCPP_INFO(rover_comm_node_->get_logger(), "oosha");
 }
 
 void RoverCommsListener::HearConfigServoWheels(const cave_talk::Servo &servo_wheel_0, const cave_talk::Servo &servo_wheel_1, const cave_talk::Servo &servo_wheel_2, const cave_talk::Servo &servo_wheel_3)
 {
+    (void)servo_wheel_0;
+    (void)servo_wheel_1;
+    (void)servo_wheel_2;
+    (void)servo_wheel_3;
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Hear config servowheels not impl.");
 }
 
 void RoverCommsListener::HearConfigServoCams(const cave_talk::Servo &servo_cam_pan, const cave_talk::Servo &servo_cam_tilt)
 {
+    (void)servo_cam_pan;
+    (void)servo_cam_tilt;
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Hear config servocams not impl.");
 }
 
 void RoverCommsListener::HearConfigMotor(const cave_talk::Motor &motor_wheel_0, const cave_talk::Motor &motor_wheel_1, const cave_talk::Motor &motor_wheel_2, const cave_talk::Motor &motor_wheel_3)
 {
+    (void)motor_wheel_0;
+    (void)motor_wheel_1;
+    (void)motor_wheel_2;
+    (void)motor_wheel_3;
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Hear config motor not impl.");
 }
 
 void RoverCommsListener::HearConfigLog(const cave_talk::LogLevel log_level)
 {
+    (void)log_level;
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard log_level");
 }
 
@@ -116,8 +137,9 @@ void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - prev_time_pt_)
     );
 
+    std::string quat_str = "Quatw: " + std::to_string(q0_) + "Quatx: " + std::to_string(q1_) + "Quaty: " + std::to_string(q2_) + "Quatz: " + std::to_string(q3_);
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard odom msgs");
-    RCLCPP_INFO(rover_comm_node_->get_logger(), "Quatw: ", q0_, ", Quatx: ", q1_, ", Quaty: ", q2_, ", Quatz: ", q3_);
+    RCLCPP_INFO(rover_comm_node_->get_logger(), quat_str.c_str());
 }
 
 void RoverCommsListener::HearLog(const char *const log)
@@ -131,7 +153,6 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
     auto imu_msg = sensor_msgs::msg::Imu();
 
     double beta = 0.1;
-    double d;
     double recipNorm;
     double s0, s1, s2, s3;
     double qDot1, qDot2, qDot3, qDot4;
@@ -237,5 +258,5 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
         0.0,  0.0,  0.04
     };
 
-    rover_comm_node_->imu_pub_->publish(imu_msg)
+    rover_comm_node_->imu_pub_->publish(imu_msg);
 }
