@@ -18,192 +18,168 @@ RoverComm::RoverComm() : Node("rover_comm")
     // Check for connected game controllers
     std::string type = this->gameControllerType();
 
+
+    RCLCPP_INFO(this->get_logger(), "rover_comms up on port ");
+
     speak_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
         std::bind(&RoverComm::speak_callback, this)
-        );
-
+    );
+    
     listen_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(10),
         std::bind(&RoverComm::listen_callback, this)
-        );
+    );
+    
 }
 
-RoverComm::~RoverComm()
-{
+RoverComm::~RoverComm(){
 }
 
-std::string RoverComm::CaveTalk_ErrorToString(CaveTalk_Error_t error)
-{
-    switch (error)
-    {
-    case CAVE_TALK_ERROR_NONE: return "CAVE_TALK_ERROR_NONE";
-    case CAVE_TALK_ERROR_NULL: return "CAVE_TALK_ERROR_NULL";
-    case CAVE_TALK_ERROR_SIZE: return "CAVE_TALK_ERROR_SIZE";
-    case CAVE_TALK_ERROR_SOCKET_CLOSED: return "CAVE_TALK_ERROR_SOCKET_CLOSED";
-    case CAVE_TALK_ERROR_INCOMPLETE: return "CAVE_TALK_ERROR_INCOMPLETE";
-    case CAVE_TALK_ERROR_CRC: return "CAVE_TALK_ERROR_CRC";
-    case CAVE_TALK_ERROR_VERSION: return "CAVE_TALK_ERROR_VERSION";
-    case CAVE_TALK_ERROR_ID: return "CAVE_TALK_ERROR_ID";
-    case CAVE_TALK_ERROR_PARSE: return "CAVE_TALK_ERROR_PARSE";
-    default: return "UNKNOWN_ERROR";
+std::string RoverComm::CaveTalk_ErrorToString(CaveTalk_Error_t error) {
+    switch (error) {
+        case CAVE_TALK_ERROR_NONE: return "CAVE_TALK_ERROR_NONE";
+        case CAVE_TALK_ERROR_NULL: return "CAVE_TALK_ERROR_NULL";
+        case CAVE_TALK_ERROR_SIZE: return "CAVE_TALK_ERROR_SIZE";
+        case CAVE_TALK_ERROR_SOCKET_CLOSED: return "CAVE_TALK_ERROR_SOCKET_CLOSED";
+        case CAVE_TALK_ERROR_INCOMPLETE: return "CAVE_TALK_ERROR_INCOMPLETE";
+        case CAVE_TALK_ERROR_CRC: return "CAVE_TALK_ERROR_CRC";
+        case CAVE_TALK_ERROR_VERSION: return "CAVE_TALK_ERROR_VERSION";
+        case CAVE_TALK_ERROR_ID: return "CAVE_TALK_ERROR_ID";
+        case CAVE_TALK_ERROR_PARSE: return "CAVE_TALK_ERROR_PARSE";
+        default: return "UNKNOWN_ERROR";
     }
 }
 
-void RoverComm::listen_callback()
-{
-    if (listener)
-    {
-        CaveTalk_Error_t error = listener->Listen();
 
+void RoverComm::listen_callback() {
+    if (listener) {
+        CaveTalk_Error_t error = listener->Listen();
         if (CAVE_TALK_ERROR_NONE != error)
         {
             RCLCPP_INFO(this->get_logger(), "Listener error %s", CaveTalk_ErrorToString(error).c_str());
         }
     }
-    else
-    {
+    else{
         RCLCPP_INFO(this->get_logger(), "Waiting for listener to be passed...");
     }
 }
 
-void RoverComm::speak_callback()
-{
-    if (talker && waiting_booga) //if still waiting for booga, send more oogas
-    {
+void RoverComm::speak_callback(){
+    if(talker && waiting_booga){ //if still waiting for booga, send more oogas
         RCLCPP_INFO(this->get_logger(), "Sending Ooga, awaiting Booga...");
         talker->SpeakOogaBooga(cave_talk::SAY_OOGA);
     }
-    else if (!talker)
-    {
-        RCLCPP_INFO(this->get_logger(), "Waiting for Speaker to be passed...");
+    else if(!talker){
+            RCLCPP_INFO(this->get_logger(), "Waiting for Speaker to be passed...");
     }
 }
 
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-    if (first_talk_)
-    {
+    if(first_talk_){
         bool success = sendConfigs("/root/ros2_ws/src/rover_comms/src/CaveTalk_Config.xml");
-        if (success)
-        {
+        if(success){
             RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: True");
-        }
-        else
-        {
+        }else{
             RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: False");
         }
         first_talk_ = false;
     }
 
-    if (talker && !(waiting_booga))
-    {
-        static bool first_log      = true; // static persists between calls
-        static bool first_log_cams = true;
+    if(talker && !(waiting_booga)){
+        static bool first_log = true; // static persists between calls
+	    static bool first_log_cams = true;
 
-        double v     = 0;
+        double v = 0;
         double omega = 0;
 
-        if (this->game_controller_type_ == "xbox")
-        {
+        if(this->game_controller_type_=="xbox"){
             // invert the values
             double r_trig = -msg->axes[4] + 1; // Default unpressed is 1.0, down to -1 fully pressed
             double l_trig = -msg->axes[5] + 1; //
-            omega = msg->axes[0];              // Angular velocity on joy 0
+            omega = msg->axes[0]; // Angular velocity on joy 0
 
             //left-rght is msg->axes[6], left is +
             //up-down is msg->axes[7], up is +
-            cam_pan_  += ((msg->axes[6]) * 3.1415926 / 32.0);
-            cam_tilt_ += ((msg->axes[7]) * 3.1415926 / 32.0);
+            cam_pan_ += ((msg->axes[6])*3.1415926/32.0);
+            cam_tilt_ += ((msg->axes[7])*3.1415926/32.0);
 
-            if (cam_pan_ < min_cam_pan_radian_)
-            {
+            if(cam_pan_ < min_cam_pan_radian_){
                 cam_pan_ = min_cam_pan_radian_;
             }
-            else if (cam_pan_ > max_cam_pan_radian_)
-            {
+            else if(cam_pan_ > max_cam_pan_radian_){
                 cam_pan_ = max_cam_pan_radian_;
             }
 
-            if (cam_tilt_ < min_cam_tilt_radian_)
-            {
+            if(cam_tilt_ < min_cam_tilt_radian_){
                 cam_tilt_ = min_cam_tilt_radian_;
             }
-            else if (cam_tilt_ > max_cam_tilt_radian_)
-            {
+            else if(cam_tilt_ > max_cam_tilt_radian_){
                 cam_tilt_ = max_cam_tilt_radian_;
             }
             v = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
         }
-        else
-        {
+        else{
             double l_joy = msg->axes[1];
             omega = msg->axes[2]; //powerA Steering with right joy
-            v     = (l_joy);
+            v = (l_joy);
         }
 
-        if (msg->buttons[4] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_))
-        {
+        if(msg->buttons[4] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_)){
             lights_toggle_ = !lights_toggle_; //toggle
             //MARK: add error checking
             CaveTalk_Error_t error_Lights = talker->SpeakLights(lights_toggle_);
 
-            if (error_Lights != CAVE_TALK_ERROR_NONE)
-            {
+            if (error_Lights != CAVE_TALK_ERROR_NONE){
                 std::string error_Lights_str = CaveTalk_ErrorToString(error_Lights);
                 RCLCPP_INFO(this->get_logger(), error_Lights_str.c_str());
             }
-            RCLCPP_INFO(this->get_logger(), "Lights toggled");
+	        RCLCPP_INFO(this->get_logger(), "Lights toggled");
             last_lights_toggle_ = this->get_clock()->now();
         }
 
-        if (msg->buttons[1] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_))
-        {
+        if(msg->buttons[1] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_)){
             arm_toggle_ = !arm_toggle_; //toggle
             //MARK: add error checking
             CaveTalk_Error_t error_arm = talker->SpeakArm(arm_toggle_);
 
-            if (error_arm != CAVE_TALK_ERROR_NONE)
-            {
+            if (error_arm != CAVE_TALK_ERROR_NONE){
                 std::string error_arm_str = CaveTalk_ErrorToString(error_arm);
                 RCLCPP_INFO(this->get_logger(), error_arm_str.c_str());
             }
 
-            if (arm_toggle_)
-            {
+            if (arm_toggle_){
                 RCLCPP_INFO(this->get_logger(), "Rover ARMED");
             }
-            else
-            {
+            else{
                 RCLCPP_INFO(this->get_logger(), "Rover DISARMED");
             }
 
             last_arm_toggle_ = this->get_clock()->now();
         }
+        
 
-
-        if (first_log || (v != prev_v_ || omega != prev_omega_))
-        {
+        if ((first_log || (v != prev_v_ || omega != prev_omega_)) || (this->get_clock()->now() - last_speak_movement_).seconds() > 0.75) {
             first_log = false;
 
             std::string command_vel_msg = "Linear_Vel: " + std::to_string(v) + ", Angular Vel: " + std::to_string(omega);
             //MARK: add error checking
             CaveTalk_Error_t error_Movement = talker->SpeakMovement(v, omega);
-
-            if (error_Movement != CAVE_TALK_ERROR_NONE)
-            {
+            last_speak_movement_ = this->get_clock()->now();
+            
+            if (error_Movement != CAVE_TALK_ERROR_NONE){
                 std::string error_Movement_str = CaveTalk_ErrorToString(error_Movement);
                 RCLCPP_INFO(this->get_logger(), error_Movement_str.c_str());
             }
             RCLCPP_INFO(this->get_logger(), command_vel_msg.c_str());
 
-            prev_v_     = v;
+            prev_v_ = v;
             prev_omega_ = omega;
         }
 
-        if (first_log_cams || (cam_pan_ != prev_cam_pan_ || cam_tilt_ != prev_cam_tilt_))
-        {
+        if (first_log_cams || (cam_pan_ != prev_cam_pan_ || cam_tilt_ != prev_cam_tilt_)) {
             first_log_cams = false;
 
             std::string cmd_cam_msg = "Cam_Pan: "  + std::to_string(cam_pan_) + ", Cam_Tilt: " + std::to_string(cam_tilt_);
@@ -211,7 +187,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             talker->SpeakCameraMovement(cam_pan_, cam_tilt_);
             RCLCPP_INFO(this->get_logger(), cmd_cam_msg.c_str());
 
-            prev_cam_pan_  = cam_pan_;
+            prev_cam_pan_ = cam_pan_;
             prev_cam_tilt_ = cam_tilt_;
         }
 
