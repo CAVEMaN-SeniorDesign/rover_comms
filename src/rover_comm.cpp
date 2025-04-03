@@ -5,8 +5,6 @@ RoverComm::RoverComm() : Node("rover_comm")
 {
     game_controller_type_ = "xbox";
 
-    lights_toggle_ = false;
-
     // Create joy subscription
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1));
@@ -18,9 +16,6 @@ RoverComm::RoverComm() : Node("rover_comm")
     // Check for connected game controllers
     std::string type = this->gameControllerType();
 
-
-    RCLCPP_INFO(this->get_logger(), "rover_comms up on port ");
-
     speak_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
         std::bind(&RoverComm::speak_callback, this)
@@ -29,6 +24,11 @@ RoverComm::RoverComm() : Node("rover_comm")
     listen_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(10),
         std::bind(&RoverComm::listen_callback, this)
+    );
+
+    cam_move_timer_ = this->create_wall_timer(
+        std::chrono::milliseconds(20),
+        std::bind(&RoverComm::cam_move_callback, this)
     );
     
 }
@@ -72,6 +72,28 @@ void RoverComm::speak_callback(){
     }
     else if(!talker){
             RCLCPP_INFO(this->get_logger(), "Waiting for Speaker to be passed...");
+    }
+}
+
+void RoverComm::cam_move_callback(){
+    double time_elapsed = (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - cam_move_last_move_time_)).count() * .001;
+    int posIdx = profiles[camera_movement_profile_index_].index;
+    int posDuration = profiles[camera_movement_profile_index_].durations[posIdx];
+
+    if (time_elapsed >= posDuration){
+        posIdx++;
+        if(posIdx >= profiles[camera_movement_profile_index_].length){
+            posIdx = 0;
+        }
+        profiles[camera_movement_profile_index_].index = posIdx;
+
+        cam_move_last_move_time_ = std::chrono::steady_clock::now();
+        double new_pan = profiles[camera_movement_profile_index_].cam_pan_radians[posIdx];
+        double new_tilt = profiles[camera_movement_profile_index_].cam_tilt_radians[posIdx];
+        talker->SpeakCameraMovement(new_pan, new_tilt);
+    }
+    else{
+        RCLCPP_INFO(this->get_logger(), "Waiting for camera movement to finish...");
     }
 }
 
@@ -1001,25 +1023,98 @@ bool RoverComm::openAndSendConfigMotor(std::string file)
         {
             extractResult = max_duty_cycle_percent_node->QueryDoubleText(&max_duty_cycle_percent);
 
-            if (extractResult == 0)
-            {
+            if (extractResult == 0) {
                 motor_wheels[i].set_max_duty_cycle_percentage(max_duty_cycle_percent);
                 RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", max_duty_cycle_percent);
                 // std::cout << max_duty_cycle_percent << std::endl;
-            }
-            else
-            {
+            }else{
                 std::cout << "Failed to extract max angle radian" << std::endl;
-            }
+            } 
         }
         else
         {
             motor_wheels[i].set_max_duty_cycle_percentage(-1);
         }
 
-
+        
     }
 
     talker->SpeakConfigMotor(motor_wheels[0], motor_wheels[1], motor_wheels[2], motor_wheels[3]);
     return true;
+}
+
+bool RoverComm::readCameraMovementConfig(std::string file){
+ 
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError error = doc.LoadFile(file.c_str());
+    if (error != tinyxml2::XML_SUCCESS) {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *root_xml = doc.FirstChildElement();
+    if (root_xml == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *cam_movements = root_xml->FirstChildElement("CameraMovement");
+    if (cam_movements == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding CameraMovement");
+        // std::cout << "Error parsing file: Couldn't find ConfigEncoder" << std::endl;
+        return false;
+    }
+
+    int idx = 0;
+    std::string durationTime = "duration";
+    double durationTimeDouble;
+    double cam_pan_rad_ref;
+    double cam_tilt_rad_ref;
+    int extractResult = -1;
+    for(tinyxml2::XMLElement *profile = cam_movements->FirstChildElement(); profile != NULL; profile = profile->NextSiblingElement())
+    {
+        int posIdx = 0;
+        for(tinyxml2::XMLElement *position = profile->FirstChildElement(); position != NULL; position = position->NextSiblingElement())
+        {
+            extractResult = profile->QueryDoubleAttribute(durationTime.c_str(), &durationTimeDouble);
+            if (extractResult == 0) {
+                profiles[idx].durations[posIdx] = durationTimeDouble;
+                RCLCPP_INFO(this->get_logger(), "Duration: %f", durationTimeDouble);
+                // std::cout << profiles[idx].duration << std::endl;
+            }
+
+            tinyxml2::XMLElement *cam_tilt_node = position->FirstChildElement("Cam_Tilt_Radians");
+            if (cam_tilt_node != nullptr)
+            {
+                extractResult = cam_tilt_node->QueryDoubleText(&cam_tilt_rad_ref);
+
+                if (extractResult == 0) {
+                    profiles[idx].cam_pan_radians[posIdx] = cam_tilt_rad_ref;
+                    // RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", cam_tilt_rad_ref);
+                    // std::cout << cam_tilt_rad_ref << std::endl;
+                }
+            }
+
+            tinyxml2::XMLElement *cam_pan_node = position->FirstChildElement("Cam_Pan_Radians");
+            if (cam_pan_node != nullptr)
+            {
+                extractResult = cam_pan_node->QueryDoubleText(&cam_pan_rad_ref);
+
+                if (extractResult == 0) {
+                    profiles[idx].cam_pan_radians[posIdx] = cam_pan_rad_ref;
+                    // RCLCPP_INFO(this->get_logger(), "max Angle Radian: %f", cam_pan_rad_ref);
+                    // std::cout << cam_pan_rad_ref << std::endl;
+                }
+            }
+            posIdx++;
+        }
+        profiles[idx].length = posIdx;
+
+        idx++;
+    }
+    
+    return true;
+
 }
