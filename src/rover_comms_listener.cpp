@@ -128,6 +128,8 @@ void RoverCommsListener::HearLog(const char *const log)
 void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
     double ax, double ay, double az, std::chrono::milliseconds dt)
 {
+    auto imu_msg = sensor_msgs::msg::Imu();
+
     double beta = 0.1;
     double d;
     double recipNorm;
@@ -200,6 +202,40 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
     q3_ *= recipNorm;
 
     // MARK: EXPORT TO RTAB
+    imu_msg.header.stamp = rover_comm_node_->now();
+    imu_msg.orientation.w = q0_;
+    imu_msg.orientation.x = q1_;
+    imu_msg.orientation.y = q2_;
+    imu_msg.orientation.z = q3_;
 
+    // TODO: TUNE THIS
+    imu_msg.orientation_covariance = {
+        0.01, 0.0,  0.0,
+        0.0,  0.01, 0.0,
+        0.0,  0.0,  0.01
+    };
 
+    imu_msg.angular_velocity.x = gx;
+    imu_msg.angular_velocity.y = gy;
+    imu_msg.angular_velocity.z = gz;
+
+    // TODO: TUNE THIS
+    imu_msg.angular_velocity_covariance = {
+        0.001, 0.0,   0.0,
+        0.0,   0.001, 0.0,
+        0.0,   0.0,   0.001
+    };
+
+    imu_msg.linear_acceleration.x = ax;
+    imu_msg.linear_acceleration.y = ay;
+    imu_msg.linear_acceleration.z = az;
+
+    // TODO: TUNE THIS
+    imu_msg.linear_acceleration_covariance = {
+        0.04, 0.0,  0.0,
+        0.0,  0.04, 0.0,
+        0.0,  0.0,  0.04
+    };
+
+    rover_comm_node_->imu_pub_->publish(imu_msg)
 }

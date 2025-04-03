@@ -13,6 +13,9 @@ RoverComm::RoverComm() : Node("rover_comm")
     odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Encoders>(
         "/odom_raw", 10);
 
+    imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
+        "/imu_data", 10);
+
     // Check for connected game controllers
     std::string type = this->gameControllerType();
 
