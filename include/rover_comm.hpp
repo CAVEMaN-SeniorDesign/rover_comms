@@ -44,6 +44,16 @@ struct CameraMovement
     double durations[maxLength]        = {0U};
 };
 
+struct CT_Sender_Movements
+{
+    static const int maxLength = 20;
+    int length = 0;
+    int index                          = 0;
+    double speed_mps[maxLength]  = {0U};
+    double turn_rate_rps[maxLength] = {0U};
+    double durations[maxLength]        = {0U};
+};
+
 class RoverComm : public rclcpp::Node
 {
     public:
@@ -54,21 +64,23 @@ class RoverComm : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr speak_timer_;
         rclcpp::TimerBase::SharedPtr listen_timer_;
         rclcpp::TimerBase::SharedPtr cam_move_timer_;
+        rclcpp::TimerBase::SharedPtr ct_sender_timer_;
         rclcpp::Publisher<rover_interfaces::msg::Odomplot>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error);                   // map to string outputs
 
         bool looping       = true;
         bool waiting_booga = true;
 
-        bool manual_ = true; // true if we are in manual mode
-        bool auto_   = true; // true if we are in auto mode
-        bool CT_sender_ = true; // true if we are sending cmds from xml sender
+        bool manual_enable_ = true; // true if we are in manual mode
+        bool auto_enable_   = true; // true if we are in auto mode
+        bool CT_sender_enable_ = true; // true if we are sending cmds from xml sender
 
     private:
         void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
         void listen_callback();
         void speak_callback();
         void cam_move_callback();
+        void ct_cmd_sender_callback();
         std::string gameControllerType();
         bool sendConfigs(std::string file);
         bool openAndSendConfigEncoder(std::string file);
@@ -110,6 +122,9 @@ class RoverComm : public rclcpp::Node
         bool arm_toggle_            = false;
         bool first_talk_            = true; // bool to assist syncing with MCU
 
+        // CT Sender Movement Vars
+        struct CT_Sender_Movements move_sequence_;
+
         // camera movement vars
         struct CameraMovement profiles_[5];
         int camera_movement_profile_length_ = 0;
@@ -120,6 +135,7 @@ class RoverComm : public rclcpp::Node
         rclcpp::Time last_lights_toggle_  = this->get_clock()->now();
         rclcpp::Time last_arm_toggle_     = this->get_clock()->now();
         rclcpp::Time cam_move_last_move_time_ = this->get_clock()->now();
+        rclcpp::Time CT_sender_last_move_time_ = this->get_clock()->now();
         rclcpp::Time cam_move_profile_button_ = this->get_clock()->now();
         double toggle_button_timeout_     = 0.5; // half-second time-out
 

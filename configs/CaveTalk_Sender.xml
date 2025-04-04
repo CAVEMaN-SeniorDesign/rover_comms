@@ -2,8 +2,24 @@
     <Single_Sender period_s="-1">
     </Single_Sender>
     <Sequence_Sender refresh_s="10">
-        <Movement duration_s="0">
-            <speed>0.5</speed>
-            <turn_rate>0.5</turn_rate>
+        <Movement duration_s="5">
+            <speed_mps>0.01</speed_mps>
+            <turn_rate_rps>0</turn_rate_rps>
         </Movement>
+        <Movement duration_s="5">
+            <speed_mps>0.5</speed_mps>
+            <turn_rate_rps>0</turn_rate_rps>
+        </Movement>
+        <Movement duration_s="5">
+            <speed_mps>0.6</speed_mps>
+            <turn_rate_rps>0</turn_rate_rps>
+        </Movement>
+        <Movement duration_s="5">
+            <speed_mps>0.01</speed_mps>
+            <turn_rate_rps>0</turn_rate_rps>
+        </Movement>
+        <!-- Don't put in speed = 0, it will be ignored for some reason
+        so put it something negligible and unachievable like .01
+        The controller should be lower bounded anyway, imo - KUSH -->
+    </Sequence_Sender>
 </CT_Sender>

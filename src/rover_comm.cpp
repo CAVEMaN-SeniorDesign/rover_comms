@@ -33,7 +33,14 @@ RoverComm::RoverComm() : Node("rover_comm")
         cam_move_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(20),
             std::bind(&RoverComm::cam_move_callback, this)
-            );
+        );
+    }
+
+    if(CT_sender_enable_ && opModeSucc){
+        ct_sender_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(100),
+            std::bind(&RoverComm::ct_cmd_sender_callback, this)
+        );
     }
     
 
@@ -123,6 +130,38 @@ void RoverComm::cam_move_callback(){
     }
 }
 
+void RoverComm::ct_cmd_sender_callback(){
+
+    if(arm_toggle_ && CT_sender_enable_){
+        double time_elapsed = (this->get_clock()->now() - CT_sender_last_move_time_).seconds();
+
+        int posIdx = move_sequence_.index;
+        double posDuration = move_sequence_.durations[posIdx];
+
+        if (time_elapsed >= posDuration){
+            RCLCPP_INFO(this->get_logger(), "posIdx: %d", posIdx);
+            RCLCPP_INFO(this->get_logger(), "posDur: %d", posDuration);
+            RCLCPP_INFO(this->get_logger(), "numPos: %d", move_sequence_.length);
+
+            posIdx++;
+            if(posIdx >= move_sequence_.length){
+                posIdx = 0;
+                bool update = readCaveTalkSender(cavetalk_sender_config_);
+                if(!update) return;
+            }
+
+            move_sequence_.index = posIdx;
+            CT_sender_last_move_time_ = this->get_clock()->now();
+            double new_speed = move_sequence_.speed_mps[posIdx];
+            double new_turn_rate = move_sequence_.turn_rate_rps[posIdx];
+            talker->SpeakMovement(new_speed, new_turn_rate);
+            RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_speed, new_turn_rate);
+        }
+        else{
+            // RCLCPP_INFO(this->get_logger(), "Waiting for camera movement to finish...");
+        }
+    }
+}
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
@@ -140,6 +179,15 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
                 RCLCPP_INFO(this->get_logger(), "Camera Movement Config Status: True");
             }else{
                 RCLCPP_INFO(this->get_logger(), "Camera Movement Config Status: False");
+            }
+        }
+
+        if(CT_sender_enable_){
+            bool ct_sender_succ = readCaveTalkSender(cavetalk_sender_config_);
+            if(ct_sender_succ){
+                RCLCPP_INFO(this->get_logger(), "CT Sender Status: True");
+            }else{
+                RCLCPP_INFO(this->get_logger(), "CT Sender Status: False");
             }
         }
         // CaveTalk_Error_t flush_error = new_serial::flush();//clearbuffer
@@ -1267,7 +1315,7 @@ bool RoverComm::readOperatingModeConfig(std::string file){
         // std::cout << "Error parsing file: Couldn't find manual mode node" << std::endl;
         return false;
     }else{
-        manual_ = checkXMLPositiveValue(manual_mode->Attribute("enable"));
+        manual_enable_ = checkXMLPositiveValue(manual_mode->Attribute("enable"));
     }
 
     tinyxml2::XMLElement *manual_cam_move = manual_mode->FirstChildElement("ManualCameraMovement");
@@ -1295,7 +1343,7 @@ bool RoverComm::readOperatingModeConfig(std::string file){
         // std::cout << "Error parsing file: Couldn't find auto mode node" << std::endl;
         return false;
     }else{
-        auto_ = checkXMLPositiveValue(auto_mode->Attribute("enable"));
+        auto_enable_ = checkXMLPositiveValue(auto_mode->Attribute("enable"));
     }
 
     tinyxml2::XMLElement *ct_sender_mode = root->FirstChildElement("CT_Sender");
@@ -1305,8 +1353,84 @@ bool RoverComm::readOperatingModeConfig(std::string file){
         // std::cout << "Error parsing file: Couldn't find CT_sender mode node" << std::endl;
         return false;
     }else{
-        CT_sender_ = checkXMLPositiveValue(ct_sender_mode->Attribute("enable"));
+        CT_sender_enable_ = checkXMLPositiveValue(ct_sender_mode->Attribute("enable"));
     }
 
+    return true;
+}
+
+bool RoverComm::readCaveTalkSender(std::string file){
+
+    move_sequence_ = CT_Sender_Movements();
+ 
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError error = doc.LoadFile(file.c_str());
+    if (error != tinyxml2::XML_SUCCESS) {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *root_xml = doc.FirstChildElement();
+    if (root_xml == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *seq_send_node = root_xml->FirstChildElement("Sequence_Sender");
+    if (seq_send_node == nullptr) {
+        RCLCPP_INFO(this->get_logger(), "Error finding Sequence_Sender");
+        // std::cout << "Error parsing file: Couldn't find Sequence_Sender" << std::endl;
+        return false;
+    }
+
+    std::string durationTime = "duration_s";
+    double durationTimeDouble = 10.0;
+    double speed_ref;
+    double turn_rate_ref;
+    int extractResult = -1;
+
+    int posIdx = 0;
+    for(tinyxml2::XMLElement *movement_node = seq_send_node->FirstChildElement(); movement_node != NULL; movement_node = movement_node->NextSiblingElement())
+    {
+        extractResult = movement_node->QueryDoubleAttribute("duration_s", &durationTimeDouble);
+        if (extractResult == 0) {
+            move_sequence_.durations[posIdx] = durationTimeDouble;
+            RCLCPP_INFO(this->get_logger(), "Duration: %f", move_sequence_.durations[posIdx]);
+            // std::cout << profiles_[idx].duration << std::endl;
+        }else{
+            RCLCPP_INFO(this->get_logger(), "Duration not found, duration set to %f", durationTimeDouble);
+        }
+
+        tinyxml2::XMLElement *speed_node = movement_node->FirstChildElement("speed_mps");
+        if (speed_node != nullptr)
+        {
+            extractResult = speed_node->QueryDoubleText(&speed_ref);
+
+            if (extractResult == 0) {
+                move_sequence_.speed_mps[posIdx] = speed_ref;
+                RCLCPP_INFO(this->get_logger(), "Speed m/s: %f", move_sequence_.speed_mps[posIdx]);
+                // std::cout << speed_ref << std::endl;
+            }
+        }
+
+        tinyxml2::XMLElement *turn_rate_node = movement_node->FirstChildElement("turn_rate_rps");
+        if (turn_rate_node != nullptr)
+        {
+            extractResult = turn_rate_node->QueryDoubleText(&turn_rate_ref);
+
+            if (extractResult == 0) {
+                move_sequence_.turn_rate_rps[posIdx] = turn_rate_ref;
+                RCLCPP_INFO(this->get_logger(), "Turn Rate rad/s: %f", move_sequence_.turn_rate_rps[posIdx]);
+                // std::cout << turn_rate_ref << std::endl;
+            }
+        }
+
+        posIdx++;
+    }
+    move_sequence_.length = posIdx;
+    RCLCPP_INFO(this->get_logger(), "Movement positions: %d", move_sequence_.length);
+    
     return true;
 }
