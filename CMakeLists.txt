@@ -100,6 +100,11 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(
+  DIRECTORY configs
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # Build tests if enabled
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

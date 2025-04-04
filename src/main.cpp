@@ -1,7 +1,9 @@
 #include "rover_comms_listener.hpp"
 #include "rover_comms_serial.hpp"
+#include "ament_index_cpp/get_package_share_directory.hpp" // for finding package path
 
-static std::string config_file = "configs/Serial_Config.xml";
+static std::string this_pkg_path = ament_index_cpp::get_package_share_directory("rover_comms");
+static std::string config_file = this_pkg_path + "/configs/Serial_Config.xml";
 static std::string port        = "/dev/ttyUSB0";
 static uint32_t    baud        = 1000000U;
 
