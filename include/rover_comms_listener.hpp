@@ -13,12 +13,11 @@
 class RoverCommsListener : public cave_talk::ListenerCallbacks
 {
     public:
-        double q0_                                                       = 1.0;
-        double q1_                                                       = 0.0;
-        double q2_                                                       = 0.0;
-        double q3_                                                       = 0.0;
+        double q0_ = 1.0;
+        double q1_ = 0.0;
+        double q2_ = 0.0;
+        double q3_ = 0.0;
         std::chrono::time_point<std::chrono::steady_clock> prev_time_pt_ = std::chrono::steady_clock::now();
-
 
         RoverCommsListener(std::shared_ptr<RoverComm> node); //possibly need "rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_ptr" instead
         void HearOogaBooga(const cave_talk::Say ooga_booga) override;

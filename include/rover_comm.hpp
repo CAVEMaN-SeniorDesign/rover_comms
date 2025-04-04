@@ -2,10 +2,11 @@
 #define ROVER_COMM_HPP
 
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/joy.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "rover_interfaces/msg/serial.hpp"
-#include "rover_interfaces/msg/odomplot.hpp"
+#include <sensor_msgs/msg/joy.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+#include "rover_interfaces/msg/encoders.hpp"
 #include <cmath>
 #include <algorithm>
 
@@ -64,10 +65,9 @@ class RoverComm : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr speak_timer_;
         rclcpp::TimerBase::SharedPtr listen_timer_;
         rclcpp::TimerBase::SharedPtr cam_move_timer_;
-        rclcpp::TimerBase::SharedPtr ct_sender_timer_;
-        rclcpp::Publisher<rover_interfaces::msg::Odomplot>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
-        std::string CaveTalk_ErrorToString(CaveTalk_Error_t error);                   // map to string outputs
-
+        rclcpp::Publisher<rover_interfaces::msg::Encoders>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
+        rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_; // public to be accessed from callbacks
+        std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
         bool looping       = true;
         bool waiting_booga = true;
 
@@ -94,7 +94,6 @@ class RoverComm : public rclcpp::Node
         bool checkXMLPositiveValue(std::string value);
 
         // sub for /cmd_vel_joy topics and publish to joystick topic
-        rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
 
         // config files
@@ -139,10 +138,6 @@ class RoverComm : public rclcpp::Node
         rclcpp::Time cam_move_profile_button_ = this->get_clock()->now();
         double toggle_button_timeout_     = 0.5; // half-second time-out
 
-        // // serial params, can be modified in rover_comms/src/Serial_Config.xml
-        // std:string serial_port_ = "/dev/ttyTHS1";
-        // unsigned long serialBaud_ = 1000000;
-        // serial::Timeout timeout = serial::Timeout::simpleTimeout(0); // non-blocking
 };
 
 #endif // ROVER_COMM_HPP

@@ -10,8 +10,11 @@ RoverComm::RoverComm() : Node("rover_comm")
         "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1));
 
     // Odom publisher
-    odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Odomplot>(
+    odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Encoders>(
         "/odom_raw", 10);
+
+    imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
+        "/imu_data", 10);
 
     // Check for connected game controllers
     std::string type = this->gameControllerType();
@@ -107,9 +110,9 @@ void RoverComm::cam_move_callback(){
         double posDuration = curr_profile.durations[posIdx];
 
         if (time_elapsed >= posDuration){
-            RCLCPP_INFO(this->get_logger(), "posIdx: %f", posIdx);
+            RCLCPP_INFO(this->get_logger(), "posIdx: %d", posIdx);
             RCLCPP_INFO(this->get_logger(), "posDur: %f", posDuration);
-            RCLCPP_INFO(this->get_logger(), "numPos: %f", curr_profile.length);
+            RCLCPP_INFO(this->get_logger(), "numPos: %d", curr_profile.length);
 
             posIdx++;
             if(posIdx >= curr_profile.length){
