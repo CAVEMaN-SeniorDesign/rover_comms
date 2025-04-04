@@ -26,10 +26,16 @@ RoverComm::RoverComm() : Node("rover_comm")
         std::bind(&RoverComm::listen_callback, this)
         );
 
-    cam_move_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(20),
-        std::bind(&RoverComm::cam_move_callback, this)
-        );
+    
+    bool opModeSucc = this->readOperatingModeConfig(this->operating_mode_config_);
+
+    if(cam_profile_move_enable_ && opModeSucc){
+        cam_move_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(20),
+            std::bind(&RoverComm::cam_move_callback, this)
+            );
+    }
+    
 
 }
 
@@ -86,7 +92,7 @@ void RoverComm::speak_callback()
 
 void RoverComm::cam_move_callback(){
 
-    if(arm_toggle_){
+    if(arm_toggle_ && cam_profile_move_enable_){
         double time_elapsed = (this->get_clock()->now() - cam_move_last_move_time_).seconds();
         struct CameraMovement curr_profile = profiles_[camera_movement_profile_index_];
 
@@ -121,18 +127,20 @@ void RoverComm::cam_move_callback(){
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
     if(first_talk_){
-        bool success = sendConfigs("/root/ros2_ws/src/rover_comms/configs/CaveTalk_Config.xml");
+        bool success = sendConfigs(cavetalk_config_);
         if(success){
             RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: True");
         }else{
             RCLCPP_INFO(this->get_logger(), "Open & Send Config Status: False");
         }
 
-        bool cam_move_succ = readCameraMovementConfig("/root/ros2_ws/src/rover_comms/configs/CaveTalk_Config.xml");
-        if(cam_move_succ){
-            RCLCPP_INFO(this->get_logger(), "Camera Movement Config Status: True");
-        }else{
-            RCLCPP_INFO(this->get_logger(), "Camera Movement Config Status: False");
+        if(cam_profile_move_enable_){
+            bool cam_move_succ = readCameraMovementConfig(camera_movement_config_);
+            if(cam_move_succ){
+                RCLCPP_INFO(this->get_logger(), "Camera Movement Config Status: True");
+            }else{
+                RCLCPP_INFO(this->get_logger(), "Camera Movement Config Status: False");
+            }
         }
         // CaveTalk_Error_t flush_error = new_serial::flush();//clearbuffer
         first_talk_ = false;
@@ -155,26 +163,30 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
             //left-rght is msg->axes[6], left is +
             //up-down is msg->axes[7], up is +
-            cam_pan_  += ((msg->axes[6]) * 3.1415926 / 32.0);
-            cam_tilt_ += ((msg->axes[7]) * 3.1415926 / 32.0);
+            if(cam_move_manual_enable_)
+            {    cam_pan_  += ((msg->axes[6]) * 3.1415926 / 32.0);
+                cam_tilt_ += ((msg->axes[7]) * 3.1415926 / 32.0);
 
-            if (cam_pan_ < min_cam_pan_radian_)
-            {
-                cam_pan_ = min_cam_pan_radian_;
-            }
-            else if (cam_pan_ > max_cam_pan_radian_)
-            {
-                cam_pan_ = max_cam_pan_radian_;
+                if (cam_pan_ < min_cam_pan_radian_)
+                {
+                    cam_pan_ = min_cam_pan_radian_;
+                }
+                else if (cam_pan_ > max_cam_pan_radian_)
+                {
+                    cam_pan_ = max_cam_pan_radian_;
+                }
+
+                if (cam_tilt_ < min_cam_tilt_radian_)
+                {
+                    cam_tilt_ = min_cam_tilt_radian_;
+                }
+                else if (cam_tilt_ > max_cam_tilt_radian_)
+                {
+                    cam_tilt_ = max_cam_tilt_radian_;
+                }
             }
 
-            if (cam_tilt_ < min_cam_tilt_radian_)
-            {
-                cam_tilt_ = min_cam_tilt_radian_;
-            }
-            else if (cam_tilt_ > max_cam_tilt_radian_)
-            {
-                cam_tilt_ = max_cam_tilt_radian_;
-            }
+
             v = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
         }
         else
@@ -197,6 +209,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
             if(camera_movement_profile_index_ < 0){
                 camera_movement_profile_index_ = camera_movement_profile_length_ - 1;
+                if(camera_movement_profile_index_ < 0) camera_movement_profile_index_ = 0;
             }
             else if(camera_movement_profile_index_ >= camera_movement_profile_length_){
                 camera_movement_profile_index_ = 0;
@@ -377,6 +390,11 @@ bool RoverComm::openAndSendConfigEncoder(std::string file)
         return false;
     }
 
+    if(!checkXMLPositiveValue(config_encoder->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Don't send config encoder, return true");
+        return true;
+    }
+
     for (int i = 0; i < 4; i++)
     {
         encoders[i] = cave_talk::ConfigEncoder();
@@ -524,6 +542,11 @@ bool RoverComm::openAndSendConfigLog(std::string file)
         return false;
     }
 
+    if(!checkXMLPositiveValue(config_log_xml->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Don't send config log, return true");
+        return true;
+    }
+
     int extractResult = -1;
 
     tinyxml2::XMLElement *log_level_xml = config_log_xml->FirstChildElement("log_level");
@@ -584,6 +607,11 @@ bool RoverComm::openAndSendConfigServoWheels(std::string file)
         RCLCPP_INFO(this->get_logger(), "Error finding ConfigServoWheels");
         // std::cout << "Error parsing file: Couldn't find ConfigServoWheels" << std::endl;
         return false;
+    }
+
+    if(!checkXMLPositiveValue(config_servo_wheels->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Don't send config servo wheels, return true");
+        return true;
     }
 
     for (int i = 0; i < 4; i++)
@@ -769,6 +797,11 @@ bool RoverComm::openAndSendConfigServoCams(std::string file)
         return false;
     }
 
+    if(!checkXMLPositiveValue(config_servo_cams->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Don't send config servo cams, return true");
+        return true;
+    }
+
     for (int i = 0; i < 2; i++)
     {
         servo_cams[i] = cave_talk::Servo();
@@ -950,6 +983,7 @@ bool RoverComm::openAndSendConfigServoCams(std::string file)
     talker->SpeakConfigServoCams(servo_cams[0], servo_cams[1]);
     return true;
 }
+
 bool RoverComm::openAndSendConfigMotor(std::string file)
 {
     tinyxml2::XMLDocument doc;
@@ -983,6 +1017,11 @@ bool RoverComm::openAndSendConfigMotor(std::string file)
         RCLCPP_INFO(this->get_logger(), "Error finding ConfigMotor");
         // std::cout << "Error parsing file: Couldn't find ConfigMotor" << std::endl;
         return false;
+    }
+
+    if(!checkXMLPositiveValue(config_motor->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Don't send config motor, return true");
+        return true;
     }
 
     for (int i = 0; i < 4; i++)
@@ -1200,4 +1239,74 @@ bool RoverComm::checkXMLPositiveValue(std::string value){
         if(value == posVal) return true;
     }
     return false;
+}
+
+bool RoverComm::readOperatingModeConfig(std::string file){
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
+    // std::cout << error << std::endl;
+    if (error != tinyxml2::XML_SUCCESS)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *root = doc.FirstChildElement();
+    if (root == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *manual_mode = root->FirstChildElement("Manual");
+    if (manual_mode == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding manual mode node");
+        // std::cout << "Error parsing file: Couldn't find manual mode node" << std::endl;
+        return false;
+    }else{
+        manual_ = checkXMLPositiveValue(manual_mode->Attribute("enable"));
+    }
+
+    tinyxml2::XMLElement *manual_cam_move = manual_mode->FirstChildElement("ManualCameraMovement");
+    if(manual_cam_move == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Not find Manual Camera Movement");
+        return false;
+    }else{
+        cam_move_manual_enable_ = checkXMLPositiveValue(manual_cam_move->GetText());
+    }
+
+    tinyxml2::XMLElement *cam_prof_move = manual_mode->FirstChildElement("CameraProfileMovement");
+    if(cam_prof_move == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Not find Camera Profile Movement");
+        return false;
+    }else{
+        cam_profile_move_enable_ = checkXMLPositiveValue(cam_prof_move->GetText());
+    }
+
+    tinyxml2::XMLElement *auto_mode = root->FirstChildElement("Auto");
+    if (auto_mode == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding auto mode node");
+        // std::cout << "Error parsing file: Couldn't find auto mode node" << std::endl;
+        return false;
+    }else{
+        auto_ = checkXMLPositiveValue(auto_mode->Attribute("enable"));
+    }
+
+    tinyxml2::XMLElement *ct_sender_mode = root->FirstChildElement("CT_Sender");
+    if (ct_sender_mode == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding CT_sender mode node");
+        // std::cout << "Error parsing file: Couldn't find CT_sender mode node" << std::endl;
+        return false;
+    }else{
+        CT_sender_ = checkXMLPositiveValue(ct_sender_mode->Attribute("enable"));
+    }
+
+    return true;
 }

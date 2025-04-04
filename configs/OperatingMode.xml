@@ -1,0 +1,8 @@
+<OperatingMode>
+    <Manual enable="true">
+        <ManualCameraMovement>true</ManualCameraMovement>
+        <CameraProfileMovement>true</CameraProfileMovement>
+    </Manual>
+    <Auto enable="false"></Auto>
+    <CT_Sender enable="true"></CT_Sender>
+</OperatingMode>

@@ -1,0 +1,122 @@
+<CameraMovementConfig enable="true">    
+    <CameraMovement startProfile="0">
+        <Profile0>
+            <Center duration="1">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+        </Profile0>
+        <Profile1>
+            <Center duration=".9">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+            <Left_Center duration=".9">
+                <Cam_Pan_Radians>1.472622</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Left_Center>
+            <Center duration=".9">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+            <Up_Center duration=".9">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.276272</Cam_Tilt_Radians>
+            </Up_Center>
+            <Center duration=".9">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+            <Right_Center duration=".9">
+                <Cam_Pan_Radians>3</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Right_Center>
+        </Profile1>
+        <Profile2>
+            <Up_Left duration=".9">
+                <Cam_Pan_Radians>1.472622</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.276272</Cam_Tilt_Radians>
+            </Up_Left>
+            <Up_Center duration=".9">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.276272</Cam_Tilt_Radians>
+            </Up_Center>
+            <Up_Right duration=".9">
+                <Cam_Pan_Radians>3.12</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.276272</Cam_Tilt_Radians>
+            </Up_Right>
+            <Center_Right duration=".9">
+                <Cam_Pan_Radians>3.12</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center_Right>
+            <Center duration=".9">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+            <Center_Left duration=".9">
+                <Cam_Pan_Radians>1.472622</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center_Left>
+            <Down_Left duration=".9">
+                <Cam_Pan_Radians>1.472622</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>2.159845</Cam_Tilt_Radians>
+            </Down_Left>
+            <Down_Center duration=".9">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>2.159845</Cam_Tilt_Radians>
+            </Down_Center>
+            <Down_Right duration=".9">
+                <Cam_Pan_Radians>3.12</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>2.159845</Cam_Tilt_Radians>
+            </Down_Right>
+            <Right_Center duration=".9">
+                <Cam_Pan_Radians>3.12</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Right_Center>
+            <Center duration=".9">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+            <Left_Center duration=".9">
+                <Cam_Pan_Radians>1.472622</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Left_Center>
+        </Profile2>
+        <Profile3>
+            <Center_Right duration=".75">
+                <Cam_Pan_Radians>3.12</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center_Right>
+            <Center duration=".75">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+            <Center_Left duration=".75">
+                <Cam_Pan_Radians>1.472622</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center_Left>
+            <Center duration=".75">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+        </Profile3>
+        <Profile4>
+            <Down_Center duration=".8">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>2.159845</Cam_Tilt_Radians>
+            </Down_Center>
+            <Center duration=".8">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+            <Up_Center duration=".8">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.276272</Cam_Tilt_Radians>
+            </Up_Center>
+            <Center duration=".8">
+                <Cam_Pan_Radians>2.552544</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.865321</Cam_Tilt_Radians>
+            </Center>
+        </Profile4>
+    </CameraMovement>
+</CameraMovementConfig>

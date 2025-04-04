@@ -60,6 +60,10 @@ class RoverComm : public rclcpp::Node
         bool looping       = true;
         bool waiting_booga = true;
 
+        bool manual_ = true; // true if we are in manual mode
+        bool auto_   = true; // true if we are in auto mode
+        bool CT_sender_ = true; // true if we are sending cmds from xml sender
+
     private:
         void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
         void listen_callback();
@@ -72,13 +76,21 @@ class RoverComm : public rclcpp::Node
         bool openAndSendConfigServoWheels(std::string file);
         bool openAndSendConfigServoCams(std::string file);
         bool openAndSendConfigMotor(std::string file);
+        bool readOperatingModeConfig(std::string file);
         bool readCameraMovementConfig(std::string file);
-        bool sendCameraMovement();
+        bool readCaveTalkSender(std::string file);
         bool checkXMLPositiveValue(std::string value);
 
         // sub for /cmd_vel_joy topics and publish to joystick topic
         rclcpp::Publisher<rover_interfaces::msg::Serial>::SharedPtr serial_read_pub_;
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
+
+        // config files
+        std::string cavetalk_config_ = "/root/ros2_ws/src/rover_comms/configs/CaveTalk_Config.xml";
+        std::string serial_config_   = "/root/ros2_ws/src/rover_comms/configs/Serial_Config.xml";
+        std::string operating_mode_config_ = "/root/ros2_ws/src/rover_comms/configs/OperatingMode.xml";
+        std::string camera_movement_config_ = "/root/ros2_ws/src/rover_comms/configs/CameraMovement.xml";
+        std::string cavetalk_sender_config_ = "/root/ros2_ws/src/rover_comms/configs/CaveTalk_Sender.xml";
 
         // Params
         std::string game_controller_type_;
@@ -92,6 +104,8 @@ class RoverComm : public rclcpp::Node
         double max_cam_pan_radian_  = 6.2831853;
         double min_cam_tilt_radian_ = 0;
         double max_cam_tilt_radian_ = 6.2831853;
+        bool cam_move_manual_enable_ = false;
+        bool cam_profile_move_enable_ = true;
         bool lights_toggle_         = false;
         bool arm_toggle_            = false;
         bool first_talk_            = true; // bool to assist syncing with MCU

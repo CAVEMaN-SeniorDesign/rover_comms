@@ -1,0 +1,9 @@
+<CT_Sender>
+    <Single_Sender period_s="-1">
+    </Single_Sender>
+    <Sequence_Sender refresh_s="10">
+        <Movement duration_s="0">
+            <speed>0.5</speed>
+            <turn_rate>0.5</turn_rate>
+        </Movement>
+</CT_Sender>
