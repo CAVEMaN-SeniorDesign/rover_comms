@@ -143,7 +143,7 @@ void RoverComm::ct_cmd_sender_callback(){
 
         if (time_elapsed >= posDuration){
             RCLCPP_INFO(this->get_logger(), "posIdx: %d", posIdx);
-            RCLCPP_INFO(this->get_logger(), "posDur: %d", posDuration);
+            RCLCPP_INFO(this->get_logger(), "posDur: %f", posDuration);
             RCLCPP_INFO(this->get_logger(), "numPos: %d", move_sequence_.length);
 
             posIdx++;

@@ -1,6 +1,8 @@
 #ifndef ROVER_COMM_HPP
 #define ROVER_COMM_HPP
 
+#include "ament_index_cpp/get_package_share_directory.hpp" // for finding package path
+
 #include "rclcpp/rclcpp.hpp"
 #include <sensor_msgs/msg/joy.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -65,6 +67,7 @@ class RoverComm : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr speak_timer_;
         rclcpp::TimerBase::SharedPtr listen_timer_;
         rclcpp::TimerBase::SharedPtr cam_move_timer_;
+        rclcpp::TimerBase::SharedPtr ct_sender_timer_;
         rclcpp::Publisher<rover_interfaces::msg::Encoders>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_; // public to be accessed from callbacks
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
@@ -95,13 +98,14 @@ class RoverComm : public rclcpp::Node
 
         // sub for /cmd_vel_joy topics and publish to joystick topic
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
+        std::string this_pkg_path = ament_index_cpp::get_package_share_directory("rover_comms");
 
         // config files
-        std::string cavetalk_config_ = "/root/ros2_ws/src/rover_comms/configs/CaveTalk_Config.xml";
-        std::string serial_config_   = "/root/ros2_ws/src/rover_comms/configs/Serial_Config.xml";
-        std::string operating_mode_config_ = "/root/ros2_ws/src/rover_comms/configs/OperatingMode.xml";
-        std::string camera_movement_config_ = "/root/ros2_ws/src/rover_comms/configs/CameraMovement.xml";
-        std::string cavetalk_sender_config_ = "/root/ros2_ws/src/rover_comms/configs/CaveTalk_Sender.xml";
+        std::string cavetalk_config_ = this_pkg_path + "/configs/CaveTalk_Config.xml";
+        std::string serial_config_   = this_pkg_path + "/configs/Serial_Config.xml";
+        std::string operating_mode_config_ = this_pkg_path + "/configs/OperatingMode.xml";
+        std::string camera_movement_config_ = this_pkg_path + "/configs/CameraMovement.xml";
+        std::string cavetalk_sender_config_ = this_pkg_path + "/configs/CaveTalk_Sender.xml";
 
         // Params
         std::string game_controller_type_;
