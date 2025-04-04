@@ -1,7 +1,7 @@
 #include "rover_comms_listener.hpp"
 #include "rover_comms_serial.hpp"
 
-static std::string config_file = "/root/ros2_ws/src/rover_comms/configs/Serial_Config.xml";
+static std::string config_file = "configs/Serial_Config.xml";
 static std::string port        = "/dev/ttyUSB0";
 static uint32_t    baud        = 1000000U;
 
