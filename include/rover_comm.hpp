@@ -11,6 +11,7 @@
 #include "rover_interfaces/msg/encoders.hpp"
 #include <cmath>
 #include <algorithm>
+#include <unordered_map>
 
 #include <csignal>
 #include <unistd.h>  // For sleep()
@@ -73,7 +74,6 @@ class RoverComm : public rclcpp::Node
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
         bool looping       = true;
         bool waiting_booga = true;
-
         bool manual_enable_ = true; // true if we are in manual mode
         bool auto_enable_   = true; // true if we are in auto mode
         bool CT_sender_enable_ = true; // true if we are sending cmds from xml sender
@@ -84,7 +84,7 @@ class RoverComm : public rclcpp::Node
         void speak_callback();
         void cam_move_callback();
         void ct_cmd_sender_callback();
-        std::string gameControllerType();
+        void gameControllerType();
         bool sendConfigs(std::string file);
         bool openAndSendConfigEncoder(std::string file);
         bool openAndSendConfigLog(std::string file);
@@ -95,6 +95,8 @@ class RoverComm : public rclcpp::Node
         bool readCameraMovementConfig(std::string file);
         bool readCaveTalkSender(std::string file);
         bool checkXMLPositiveValue(std::string value);
+        void calculateCamMovement(const sensor_msgs::msg::Joy::SharedPtr msg);
+        void calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg);
 
         // sub for /cmd_vel_joy topics and publish to joystick topic
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
@@ -109,8 +111,10 @@ class RoverComm : public rclcpp::Node
 
         // Params
         std::string game_controller_type_;
-        double prev_v_;
-        double prev_omega_;
+        double v_                   = 0;
+        double omega_               = 0;
+        double prev_v_              = 0;
+        double prev_omega_          = 0;
         double prev_cam_pan_        = 0;
         double prev_cam_tilt_       = 0;
         double cam_pan_             = 1.5707963;
@@ -125,6 +129,27 @@ class RoverComm : public rclcpp::Node
         bool arm_toggle_            = false;
         bool first_talk_            = true; // bool to assist syncing with MCU
 
+        // This is here just so we can see all the available mappings.
+        std::unordered_map<std::string, int> controller_mappings_ = {
+            {"L_trigger", -1},
+            {"R_trigger", -1},
+            {"arm", -1}, // right most button
+            {"lights", -1}, // up x
+            {"mode", -1},
+            {"L_shoulder", -1}, // Cam profile -
+            {"R_shoulder", -1}, // Cam profile +
+            {"L_joy_x", -1},
+            {"L_joy_y", -1},
+            {"R_joy_x", -1},
+            {"R_joy_y", -1},
+            {"D_x", -1},
+            {"D_y", -1},
+            {"D_up", -1},
+            {"D_down", -1},
+            {"D_left", -1},
+            {"D_right", -1}
+        };
+        
         // CT Sender Movement Vars
         struct CT_Sender_Movements move_sequence_;
 
