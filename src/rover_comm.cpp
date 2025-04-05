@@ -150,6 +150,7 @@ void RoverComm::ct_cmd_sender_callback(){
             if(posIdx >= move_sequence_.length){
                 posIdx = 0;
                 bool update = readCaveTalkSender(cavetalk_sender_config_);
+                update &= openAndSendConfigPID(cavetalk_config_);
                 if(!update) return;
             }
 
@@ -157,6 +158,8 @@ void RoverComm::ct_cmd_sender_callback(){
             CT_sender_last_move_time_ = this->get_clock()->now();
             double new_speed = move_sequence_.speed_mps[posIdx];
             double new_turn_rate = move_sequence_.turn_rate_rps[posIdx];
+            v_overrider_ctsender_ = new_speed;
+            omega_overrider_ctsender_ = new_turn_rate;
             talker->SpeakMovement(new_speed, new_turn_rate);
             RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_speed, new_turn_rate);
         }
@@ -202,20 +205,23 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
         static bool first_log      = true; // static persists between calls
         static bool first_log_cams = true;
 
-        double v     = 0;
-        double omega = 0;
-
         if (this->game_controller_type_ == "xbox")
         {
             // invert the values
             double r_trig = -msg->axes[4] + 1; // Default unpressed is 1.0, down to -1 fully pressed
             double l_trig = -msg->axes[5] + 1; //
-            omega = msg->axes[0];              // Angular velocity on joy 0
-
+            v_ = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
+            
+            omega_ = msg->axes[0];
+            double omega_map = 2.0*((.08 * max_wheel_speed_rps_) - v_) / 0.4938;
+            
+            if(omega_ > omega_map) omega_ = omega_map;   // Angular velocity on joy 0
+            if(omega_ < -omega_map) omega_ = -omega_map; // Angular velocity on joy 0
+            
             //left-rght is msg->axes[6], left is +
             //up-down is msg->axes[7], up is +
             if(cam_move_manual_enable_)
-            {    cam_pan_  += ((msg->axes[6]) * 3.1415926 / 32.0);
+            {   cam_pan_  += ((msg->axes[6]) * 3.1415926 / 32.0);
                 cam_tilt_ += ((msg->axes[7]) * 3.1415926 / 32.0);
 
                 if (cam_pan_ < min_cam_pan_radian_)
@@ -238,13 +244,12 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             }
 
 
-            v = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
         }
         else
         {
             double l_joy = msg->axes[1];
-            omega = msg->axes[2]; //powerA Steering with right joy
-            v     = (l_joy);
+            omega_ = msg->axes[2]; //powerA Steering with right joy
+            v_     = (l_joy);
         }
 
         if((msg->buttons[6] || msg->buttons[7]) && ((this->get_clock()->now() - cam_move_profile_button_).seconds() > toggle_button_timeout_)){
@@ -311,13 +316,20 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
         }
 
 
-        if ((first_log || (v != prev_v_ || omega != prev_omega_)) || (this->get_clock()->now() - last_speak_movement_).seconds() > 0.75)
+        if ((first_log || (v_ != prev_v_ || omega_ != prev_omega_)) || (((this->get_clock()->now() - last_speak_movement_).seconds() > 0.75)))
         {
             first_log = false;
 
-            std::string command_vel_msg = "Linear_Vel: " + std::to_string(v) + ", Angular Vel: " + std::to_string(omega);
+            std::string command_vel_msg = "Linear_Vel: " + std::to_string(v_) + ", Angular Vel: " + std::to_string(omega_);
+
+            CaveTalk_Error_t error_Movement;
             //MARK: add error checking
-            CaveTalk_Error_t error_Movement = talker->SpeakMovement(v, omega);
+            if(CT_sender_enable_){
+                error_Movement = talker->SpeakMovement(v_overrider_ctsender_, omega_overrider_ctsender_);
+            }else if(manual_enable_){
+                error_Movement = talker->SpeakMovement(v_, omega_);
+            }
+
             last_speak_movement_ = this->get_clock()->now();
 
             if (error_Movement != CAVE_TALK_ERROR_NONE)
@@ -327,8 +339,8 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             }
             RCLCPP_INFO(this->get_logger(), command_vel_msg.c_str());
 
-            prev_v_     = v;
-            prev_omega_ = omega;
+            prev_v_     = v_;
+            prev_omega_ = omega_;
         }
 
         if (first_log_cams || (cam_pan_ != prev_cam_pan_ || cam_tilt_ != prev_cam_tilt_))
@@ -1435,5 +1447,127 @@ bool RoverComm::readCaveTalkSender(std::string file){
     move_sequence_.length = posIdx;
     RCLCPP_INFO(this->get_logger(), "Movement positions: %d", move_sequence_.length);
     
+    return true;
+}
+
+bool RoverComm::openAndSendConfigPID(std::string file)
+{
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
+    // std::cout << error << std::endl;
+    if (error != tinyxml2::XML_SUCCESS)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    cave_talk::PID wheel_params[4];
+    double           Kp;
+    double           Ki;
+    double           Kd;
+
+    tinyxml2::XMLElement *root = doc.FirstChildElement();
+    if (root == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *config_pid = root->FirstChildElement("ConfigPID");
+    if (config_pid == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding ConfigMotor");
+        // std::cout << "Error parsing file: Couldn't find ConfigMotor" << std::endl;
+        return false;
+    }
+
+    if(!checkXMLPositiveValue(config_pid->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Don't send config pid, return true");
+        return true;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        wheel_params[i] = cave_talk::PID();
+
+        std::string wheel_name = "Wheel_" + std::to_string(i) + "_params";
+
+        tinyxml2::XMLElement *wheel_node = config_pid->FirstChildElement(wheel_name.c_str());
+        if (wheel_node == nullptr)
+        {
+            RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find %s", wheel_name.c_str());
+            // std::cout << "Error parsing file: Couldnt find " << wheel_name << std::endl;
+            return false;
+        }
+
+        int extractResult = -1;
+
+        tinyxml2::XMLElement *prop_gain_node = wheel_node->FirstChildElement("Kp");
+        if (prop_gain_node != nullptr)
+        {
+            extractResult = prop_gain_node->QueryDoubleText(&Kp);
+
+            if (extractResult == 0)
+            {
+                wheel_params[i].set_kp(Kp);
+                RCLCPP_INFO(this->get_logger(), "Prop Gain: %f", Kp);
+                // std::cout << Kp << std::endl;
+            }
+            else
+            {
+                std::cout << "Failed to extract Proportional Gain" << std::endl;
+            }
+        }
+        else
+        {
+            wheel_params[i].set_kp(0);
+        }
+
+        tinyxml2::XMLElement *integ_gain_node = wheel_node->FirstChildElement("Ki");
+        if (integ_gain_node != nullptr)
+        {
+            extractResult = integ_gain_node->QueryDoubleText(&Ki);
+
+            if (extractResult == 0)
+            {
+                wheel_params[i].set_ki(Ki);
+                RCLCPP_INFO(this->get_logger(), "Ki: %f", Ki);
+                // std::cout << Ki << std::endl;
+            }
+            else
+            {
+                std::cout << "Failed to extract Ki" << std::endl;
+            }
+        }
+        else
+        {
+            wheel_params[i].set_ki(-1);
+        }
+
+        tinyxml2::XMLElement *derv_gain_node = wheel_node->FirstChildElement("Kd");
+        if (derv_gain_node != nullptr)
+        {
+            extractResult = derv_gain_node->QueryDoubleText(&Kd);
+
+            if (extractResult == 0)
+            {
+                wheel_params[i].set_kd(Kd);
+                RCLCPP_INFO(this->get_logger(), "Kd: %f", Kd);
+                // std::cout << Kd << std::endl;
+            }
+            else
+            {
+                std::cout << "Failed to extract Kd" << std::endl;
+            }
+        }
+        else
+        {
+            wheel_params[i].set_kd(-1);
+        }
+    }
+
+    talker->SpeakConfigWheelSpeedControl(wheel_params[0], wheel_params[1], wheel_params[2], wheel_params[3]);
     return true;
 }

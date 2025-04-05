@@ -101,6 +101,16 @@ void RoverCommsListener::HearConfigLog(const cave_talk::LogLevel log_level)
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard log_level");
 }
 
+void RoverCommsListener::HearConfigWheelSpeedControl(const cave_talk::PID &wheel_0_params, const cave_talk::PID &wheel_1_params, const cave_talk::PID &wheel_2_params, const cave_talk::PID &wheel_3_params)
+{
+    RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard Wheel speed control PID params");
+}
+
+void RoverCommsListener::HearConfigSteeringControl(const cave_talk::PID &turn_rate_params)
+{
+    RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard steering control pid params");
+}
+
 void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk::Encoder &encoder_wheel_0, const cave_talk::Encoder &encoder_wheel_1, const cave_talk::Encoder &encoder_wheel_2, const cave_talk::Encoder &encoder_wheel_3)
 {
     auto msg = rover_interfaces::msg::Encoders();

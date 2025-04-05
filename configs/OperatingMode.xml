@@ -4,5 +4,5 @@
         <CameraProfileMovement>false</CameraProfileMovement>
     </Manual>
     <Auto enable="false"></Auto>
-    <CT_Sender enable="true"></CT_Sender>
+    <CT_Sender enable="false"></CT_Sender>
 </OperatingMode>
