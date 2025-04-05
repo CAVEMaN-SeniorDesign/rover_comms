@@ -139,7 +139,7 @@ void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk
 
     std::string quat_str = "Quatw: " + std::to_string(q0_) + "Quatx: " + std::to_string(q1_) + "Quaty: " + std::to_string(q2_) + "Quatz: " + std::to_string(q3_);
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard odom msgs");
-    RCLCPP_INFO(rover_comm_node_->get_logger(), quat_str.c_str());
+    //RCLCPP_INFO(rover_comm_node_->get_logger(), quat_str.c_str());
 }
 
 void RoverCommsListener::HearLog(const char *const log)
