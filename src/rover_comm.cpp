@@ -208,8 +208,8 @@ void RoverComm::calculateCamMovement(const sensor_msgs::msg::Joy::SharedPtr msg)
 void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
     if (game_controller_type_ == "xbox")
     {
-        double r_trig = -msg->axes[controller_mappings_["L_trigger"]] + 1; // Default unpressed is 1.0, down to -1 fully pressed
-        double l_trig = -msg->axes[controller_mappings_["R_trigger"]] + 1; //
+        double r_trig = -msg->axes[controller_mappings_["R_trigger"]] + 1; // Default unpressed is 1.0, down to -1 fully pressed
+        double l_trig = -msg->axes[controller_mappings_["L_trigger"]] + 1; //
         omega_ = msg->axes[controller_mappings_["L_joy_x"]];  // Angular velocity on horiz joy
         v_ = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
     }
@@ -389,7 +389,7 @@ void RoverComm::gameControllerType()
         if (line.find("Name=") != std::string::npos)
         {
             // If found line with "Controller" or "Gamepad" in it.
-            bool xbox   = line.find("Microsoft Xbox") != std::string::npos;
+            bool xbox   = (line.find("Microsoft Xbox") != std::string::npos) || (line.find("Xbox Wireless Controller") != std::string::npos) ;
             bool powerA = line.find("PowerA NSW") != std::string::npos;
             bool switchPro = line.find("Pro Controller") != std::string::npos;
             if (xbox)
