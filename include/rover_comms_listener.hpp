@@ -32,10 +32,9 @@ class RoverCommsListener : public cave_talk::ListenerCallbacks
         void HearConfigLog(const cave_talk::LogLevel log_level) override;
         void HearOdometry(const cave_talk::Imu &IMU, const cave_talk::Encoder &encoder_wheel_0, const cave_talk::Encoder &encoder_wheel_1, const cave_talk::Encoder &encoder_wheel_2, const cave_talk::Encoder &encoder_wheel_3) override;
         void HearLog(const char *const log) override;
-        void HearConfigWheelSpeedControl(const cave_talk::PID &wheel_0_params, const cave_talk::PID &wheel_1_params, const cave_talk::PID &wheel_2_params, const cave_talk::PID &wheel_3_params) override;
-        void HearConfigSteeringControl(const cave_talk::PID &turn_rate_params) override;
+        void HearConfigWheelSpeedControl(const cave_talk::PID &wheel_0_params, const cave_talk::PID &wheel_1_params, const cave_talk::PID &wheel_2_params, const cave_talk::PID &wheel_3_params, const bool enabled) override;
+        void HearConfigSteeringControl(const cave_talk::PID &turn_rate_params, const bool enabled) override;
         void MadgwickAHRSupdateIMU(double gx, double gy, double gz, double ax, double ay, double az, std::chrono::milliseconds dt);
-
     private:
         std::shared_ptr<RoverComm> rover_comm_node_;
 };

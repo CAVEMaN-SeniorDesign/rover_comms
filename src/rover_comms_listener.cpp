@@ -101,12 +101,12 @@ void RoverCommsListener::HearConfigLog(const cave_talk::LogLevel log_level)
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard log_level");
 }
 
-void RoverCommsListener::HearConfigWheelSpeedControl(const cave_talk::PID &wheel_0_params, const cave_talk::PID &wheel_1_params, const cave_talk::PID &wheel_2_params, const cave_talk::PID &wheel_3_params)
+void RoverCommsListener::HearConfigWheelSpeedControl(const cave_talk::PID &wheel_0_params, const cave_talk::PID &wheel_1_params, const cave_talk::PID &wheel_2_params, const cave_talk::PID &wheel_3_params, const bool enabled)
 {
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard Wheel speed control PID params");
 }
 
-void RoverCommsListener::HearConfigSteeringControl(const cave_talk::PID &turn_rate_params)
+void RoverCommsListener::HearConfigSteeringControl(const cave_talk::PID &turn_rate_params, const bool enabled)
 {
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard steering control pid params");
 }

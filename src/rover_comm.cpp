@@ -240,7 +240,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
                 else if (cam_tilt_ > max_cam_tilt_radian_)
                 {
                     cam_tilt_ = max_cam_tilt_radian_;
-                }
+		}
             }
 
 
@@ -1568,6 +1568,6 @@ bool RoverComm::openAndSendConfigPID(std::string file)
         }
     }
 
-    talker->SpeakConfigWheelSpeedControl(wheel_params[0], wheel_params[1], wheel_params[2], wheel_params[3]);
+    talker->SpeakConfigWheelSpeedControl(wheel_params[0], wheel_params[1], wheel_params[2], wheel_params[3], true);
     return true;
 }
