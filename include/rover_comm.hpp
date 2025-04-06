@@ -29,7 +29,7 @@
 #include "tinyxml2.h"
 #include <chrono>
 
-#define MAX_LINEAR_VEL  1.0
+#define MAX_LINEAR_VEL  1.5
 #define MAX_ANGULAR_VEL 1.0
 
 /*Common ports that are assigned on default (we should implement automatic port find and selection):
@@ -91,6 +91,7 @@ class RoverComm : public rclcpp::Node
         bool openAndSendConfigServoWheels(std::string file);
         bool openAndSendConfigServoCams(std::string file);
         bool openAndSendConfigMotor(std::string file);
+        bool openAndSendConfigPID(std::string file);
         bool readOperatingModeConfig(std::string file);
         bool readCameraMovementConfig(std::string file);
         bool readCaveTalkSender(std::string file);
@@ -115,6 +116,11 @@ class RoverComm : public rclcpp::Node
         double omega_               = 0;
         double prev_v_              = 0;
         double prev_omega_          = 0;
+        
+        double max_wheel_speed_rps_ = 18.75;
+        double v_overrider_ctsender_;
+        double omega_overrider_ctsender_;
+
         double prev_cam_pan_        = 0;
         double prev_cam_tilt_       = 0;
         double cam_pan_             = 1.5707963;

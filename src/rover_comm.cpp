@@ -148,6 +148,7 @@ void RoverComm::ct_cmd_sender_callback(){
             if(posIdx >= move_sequence_.length){
                 posIdx = 0;
                 bool update = readCaveTalkSender(cavetalk_sender_config_);
+                update &= openAndSendConfigPID(cavetalk_config_);
                 if(!update) return;
             }
 
@@ -155,6 +156,8 @@ void RoverComm::ct_cmd_sender_callback(){
             CT_sender_last_move_time_ = this->get_clock()->now();
             double new_speed = move_sequence_.speed_mps[posIdx];
             double new_turn_rate = move_sequence_.turn_rate_rps[posIdx];
+            v_overrider_ctsender_ = new_speed;
+            omega_overrider_ctsender_ = new_turn_rate;
             talker->SpeakMovement(new_speed, new_turn_rate);
             RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_speed, new_turn_rate);
         }
@@ -259,7 +262,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
         //MARK: CAM_PROFILES"
         // Left and Right shoulder shifts profiles
         if((msg->buttons[controller_mappings_["L_shoulder"]] || msg->buttons[controller_mappings_["R_shoulder"]]) && ((this->get_clock()->now() - cam_move_profile_button_).seconds() > toggle_button_timeout_)){
-            if(msg->buttons[controller_mappings_["L_shoulder"]] && msg->buttons[controller_mappings_["R_shoulder"]]){
+        if(msg->buttons[controller_mappings_["L_shoulder"]] && msg->buttons[controller_mappings_["R_shoulder"]]){
                 //do nothing
             }
             else if(msg->buttons[controller_mappings_["L_shoulder"]]){
@@ -327,8 +330,15 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             first_log = false;
 
             std::string command_vel_msg = "Linear_Vel: " + std::to_string(v_) + ", Angular Vel: " + std::to_string(omega_);
+
+            CaveTalk_Error_t error_Movement;
             //MARK: add error checking
-            CaveTalk_Error_t error_Movement = talker->SpeakMovement(v_, omega_);
+            if(CT_sender_enable_){
+                error_Movement = talker->SpeakMovement(v_overrider_ctsender_, omega_overrider_ctsender_);
+            }else if(manual_enable_){
+                error_Movement = talker->SpeakMovement(v_, omega_);
+            }
+
             last_speak_movement_ = this->get_clock()->now();
 
             if (error_Movement != CAVE_TALK_ERROR_NONE)
@@ -1486,5 +1496,127 @@ bool RoverComm::readCaveTalkSender(std::string file){
     move_sequence_.length = posIdx;
     RCLCPP_INFO(this->get_logger(), "Movement positions: %d", move_sequence_.length);
     
+    return true;
+}
+
+bool RoverComm::openAndSendConfigPID(std::string file)
+{
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
+    // std::cout << error << std::endl;
+    if (error != tinyxml2::XML_SUCCESS)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    cave_talk::PID wheel_params[4];
+    double           Kp;
+    double           Ki;
+    double           Kd;
+
+    tinyxml2::XMLElement *root = doc.FirstChildElement();
+    if (root == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *config_pid = root->FirstChildElement("ConfigPID");
+    if (config_pid == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding ConfigMotor");
+        // std::cout << "Error parsing file: Couldn't find ConfigMotor" << std::endl;
+        return false;
+    }
+
+    if(!checkXMLPositiveValue(config_pid->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Don't send config pid, return true");
+        return true;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        wheel_params[i] = cave_talk::PID();
+
+        std::string wheel_name = "Wheel_" + std::to_string(i) + "_params";
+
+        tinyxml2::XMLElement *wheel_node = config_pid->FirstChildElement(wheel_name.c_str());
+        if (wheel_node == nullptr)
+        {
+            RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find %s", wheel_name.c_str());
+            // std::cout << "Error parsing file: Couldnt find " << wheel_name << std::endl;
+            return false;
+        }
+
+        int extractResult = -1;
+
+        tinyxml2::XMLElement *prop_gain_node = wheel_node->FirstChildElement("Kp");
+        if (prop_gain_node != nullptr)
+        {
+            extractResult = prop_gain_node->QueryDoubleText(&Kp);
+
+            if (extractResult == 0)
+            {
+                wheel_params[i].set_kp(Kp);
+                RCLCPP_INFO(this->get_logger(), "Prop Gain: %f", Kp);
+                // std::cout << Kp << std::endl;
+            }
+            else
+            {
+                std::cout << "Failed to extract Proportional Gain" << std::endl;
+            }
+        }
+        else
+        {
+            wheel_params[i].set_kp(0);
+        }
+
+        tinyxml2::XMLElement *integ_gain_node = wheel_node->FirstChildElement("Ki");
+        if (integ_gain_node != nullptr)
+        {
+            extractResult = integ_gain_node->QueryDoubleText(&Ki);
+
+            if (extractResult == 0)
+            {
+                wheel_params[i].set_ki(Ki);
+                RCLCPP_INFO(this->get_logger(), "Ki: %f", Ki);
+                // std::cout << Ki << std::endl;
+            }
+            else
+            {
+                std::cout << "Failed to extract Ki" << std::endl;
+            }
+        }
+        else
+        {
+            wheel_params[i].set_ki(-1);
+        }
+
+        tinyxml2::XMLElement *derv_gain_node = wheel_node->FirstChildElement("Kd");
+        if (derv_gain_node != nullptr)
+        {
+            extractResult = derv_gain_node->QueryDoubleText(&Kd);
+
+            if (extractResult == 0)
+            {
+                wheel_params[i].set_kd(Kd);
+                RCLCPP_INFO(this->get_logger(), "Kd: %f", Kd);
+                // std::cout << Kd << std::endl;
+            }
+            else
+            {
+                std::cout << "Failed to extract Kd" << std::endl;
+            }
+        }
+        else
+        {
+            wheel_params[i].set_kd(-1);
+        }
+    }
+
+    talker->SpeakConfigWheelSpeedControl(wheel_params[0], wheel_params[1], wheel_params[2], wheel_params[3], true);
     return true;
 }

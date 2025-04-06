@@ -26,39 +26,39 @@
         </Encoder_Wheel_3>
     </ConfigEncoder>
     <ConfigLog send="true">
-        <log_level>4</log_level> <!-- 0: Error, 1: Warning, 2: Info, 3: Debug, 4: Verbose -->
+        <log_level>3</log_level> <!-- 0: Error, 1: Warning, 2: Info, 3: Debug, 4: Verbose -->
     </ConfigLog>
     <ConfigServoWheels send="true">
         <Servo_Wheel_0>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0.0</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>1.0</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Wheel_0>
         <Servo_Wheel_1>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0.0</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>1.0</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Wheel_1>
         <Servo_Wheel_2>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0.0</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>1.0</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Wheel_2>
         <Servo_Wheel_3>
             <min_angle_radian>0.0</min_angle_radian>
             <max_angle_radian>6.28318530718</max_angle_radian>
             <center_angle_radian>3.14159265359</center_angle_radian>
-            <min_duty_cycle_microsec>1000</min_duty_cycle_microsec>
-            <max_duty_cycle_microsec>2000</max_duty_cycle_microsec>
+            <min_duty_cycle_microsec>0.0</min_duty_cycle_microsec>
+            <max_duty_cycle_microsec>1.0</max_duty_cycle_microsec>
             <center_duty_cycle_microsec>1500</center_duty_cycle_microsec>
         </Servo_Wheel_3>
     </ConfigServoWheels>
@@ -84,30 +84,52 @@
         <Motor_Wheel_0>
             <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
-            <max_speed_loaded_mps>1.0</max_speed_loaded_mps>
-            <min_duty_cycle_percent>1000</min_duty_cycle_percent>
-            <max_duty_cycle_percent>2000</max_duty_cycle_percent>
+            <max_speed_loaded_mps>18.75</max_speed_loaded_mps>
+            <min_duty_cycle_percent>0.0</min_duty_cycle_percent>
+            <max_duty_cycle_percent>1.0</max_duty_cycle_percent>
         </Motor_Wheel_0>
         <Motor_Wheel_1>
             <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
-            <max_speed_loaded_mps>1.0</max_speed_loaded_mps>
-            <min_duty_cycle_percent>1000</min_duty_cycle_percent>
-            <max_duty_cycle_percent>2000</max_duty_cycle_percent>
+            <max_speed_loaded_mps>18.75</max_speed_loaded_mps>
+            <min_duty_cycle_percent>0.0</min_duty_cycle_percent>
+            <max_duty_cycle_percent>1.0</max_duty_cycle_percent>
         </Motor_Wheel_1>
         <Motor_Wheel_2>
             <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
-            <max_speed_loaded_mps>1.0</max_speed_loaded_mps>
-            <min_duty_cycle_percent>1000</min_duty_cycle_percent>
-            <max_duty_cycle_percent>2000</max_duty_cycle_percent>
+            <max_speed_loaded_mps>18.75</max_speed_loaded_mps>
+            <min_duty_cycle_percent>0.0</min_duty_cycle_percent>
+            <max_duty_cycle_percent>1.0</max_duty_cycle_percent>
         </Motor_Wheel_2>
         <Motor_Wheel_3>
             <pwm_carrier_freq_hz>1000</pwm_carrier_freq_hz>
             <min_speed_loaded_mps>0.0</min_speed_loaded_mps>
-            <max_speed_loaded_mps>1.0</max_speed_loaded_mps>
-            <min_duty_cycle_percent>1000</min_duty_cycle_percent>
-            <max_duty_cycle_percent>2000</max_duty_cycle_percent>
+            <max_speed_loaded_mps>18.75</max_speed_loaded_mps>
+            <min_duty_cycle_percent>0.0</min_duty_cycle_percent>
+            <max_duty_cycle_percent>1.0</max_duty_cycle_percent>
         </Motor_Wheel_3>
     </ConfigMotor>
+    <ConfigPID send="false">
+        <Wheel_0_params>
+            <Kp>2</Kp> 
+            <Ki>1.5</Ki>
+            <Kd>0.000001</Kd>
+        </Wheel_0_params>
+        <Wheel_1_params>
+            <Kp>2</Kp>
+            <Ki>1.5</Ki>
+            <Kd>0.000001</Kd>
+        </Wheel_1_params>
+        <Wheel_2_params>
+            <Kp>.2</Kp>
+            <Ki>1.5</Ki>
+            <Kd>0.000001</Kd>
+        </Wheel_2_params>
+        <Wheel_3_params>
+            <Kp>2</Kp>
+            <Ki>1.5</Ki>
+            <Kd>0.000001</Kd>
+        </Wheel_3_params>
+    </ConfigPID>
 </CaveTalk_Config>
