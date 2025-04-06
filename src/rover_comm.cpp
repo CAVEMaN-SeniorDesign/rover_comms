@@ -3,8 +3,6 @@
 
 RoverComm::RoverComm() : Node("rover_comm")
 {
-    game_controller_type_ = "xbox";
-
     // Create joy subscription
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1));
@@ -17,7 +15,7 @@ RoverComm::RoverComm() : Node("rover_comm")
         "/imu_data", 10);
 
     // Check for connected game controllers
-    std::string type = this->gameControllerType();
+    this->gameControllerType();
 
     speak_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
@@ -169,6 +167,58 @@ void RoverComm::ct_cmd_sender_callback(){
     }
 }
 
+void RoverComm::calculateCamMovement(const sensor_msgs::msg::Joy::SharedPtr msg)
+{
+    if(cam_move_manual_enable_)
+    {   
+        int add_cam_pan = 0;
+        int add_cam_tilt = 0;
+        if(game_controller_type_ == "xbox")
+        {
+            add_cam_pan = ((msg->axes[controller_mappings_["D_x"]]) * 3.1415926 / 32.0);
+            add_cam_tilt = ((msg->axes[controller_mappings_["D_y"]]) * 3.1415926 / 32.0);
+        }
+        else{
+            add_cam_pan = ((msg->buttons[controller_mappings_["D_left"]] - msg->buttons[controller_mappings_["D_right"]]) * 3.1415926 / 32.0);
+            add_cam_tilt = ((msg->buttons[controller_mappings_["D_up"]] - msg->buttons[controller_mappings_["D_down"]]) * 3.1415926 / 32.0);
+        }
+        cam_pan_  += add_cam_pan;
+        cam_tilt_ += add_cam_tilt;
+
+        if (cam_pan_ < min_cam_pan_radian_)
+        {
+            cam_pan_ = min_cam_pan_radian_;
+        }
+        else if (cam_pan_ > max_cam_pan_radian_)
+        {
+            cam_pan_ = max_cam_pan_radian_;
+        }
+
+        if (cam_tilt_ < min_cam_tilt_radian_)
+        {
+            cam_tilt_ = min_cam_tilt_radian_;
+        }
+        else if (cam_tilt_ > max_cam_tilt_radian_)
+        {
+            cam_tilt_ = max_cam_tilt_radian_;
+        }
+    }
+}
+
+void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
+    if (game_controller_type_ == "xbox")
+    {
+        double r_trig = -msg->axes[controller_mappings_["L_trigger"]] + 1; // Default unpressed is 1.0, down to -1 fully pressed
+        double l_trig = -msg->axes[controller_mappings_["R_trigger"]] + 1; //
+        omega_ = msg->axes[controller_mappings_["L_joy_x"]];  // Angular velocity on horiz joy
+        v_ = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
+    }
+    else{
+        omega_ = msg->axes[controller_mappings_["L_joy_x"]]; // steering with left joy
+        v_    = msg->axes[controller_mappings_["R_joy_y"]]; // should be already in float type, driving with right joy
+    }
+}
+
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
     if(first_talk_){
@@ -205,58 +255,17 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
         static bool first_log      = true; // static persists between calls
         static bool first_log_cams = true;
 
-        if (this->game_controller_type_ == "xbox")
-        {
-            // invert the values
-            double r_trig = -msg->axes[4] + 1; // Default unpressed is 1.0, down to -1 fully pressed
-            double l_trig = -msg->axes[5] + 1; //
-            v_ = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
-            
-            omega_ = msg->axes[0];
-            double omega_map = 2.0*((.08 * max_wheel_speed_rps_) - v_) / 0.4938;
-            
-            if(omega_ > omega_map) omega_ = omega_map;   // Angular velocity on joy 0
-            if(omega_ < -omega_map) omega_ = -omega_map; // Angular velocity on joy 0
-            
-            //left-rght is msg->axes[6], left is +
-            //up-down is msg->axes[7], up is +
-            if(cam_move_manual_enable_)
-            {   cam_pan_  += ((msg->axes[6]) * 3.1415926 / 32.0);
-                cam_tilt_ += ((msg->axes[7]) * 3.1415926 / 32.0);
+        // REMOVED BIG IF STATEMENT FOR v, omega, and manual camera movement. Replaced by functions
+        calculateMovement(msg);
+        calculateCamMovement(msg);
 
-                if (cam_pan_ < min_cam_pan_radian_)
-                {
-                    cam_pan_ = min_cam_pan_radian_;
-                }
-                else if (cam_pan_ > max_cam_pan_radian_)
-                {
-                    cam_pan_ = max_cam_pan_radian_;
-                }
-
-                if (cam_tilt_ < min_cam_tilt_radian_)
-                {
-                    cam_tilt_ = min_cam_tilt_radian_;
-                }
-                else if (cam_tilt_ > max_cam_tilt_radian_)
-                {
-                    cam_tilt_ = max_cam_tilt_radian_;
-		}
-            }
-
-
-        }
-        else
-        {
-            double l_joy = msg->axes[1];
-            omega_ = msg->axes[2]; //powerA Steering with right joy
-            v_     = (l_joy);
-        }
-
-        if((msg->buttons[6] || msg->buttons[7]) && ((this->get_clock()->now() - cam_move_profile_button_).seconds() > toggle_button_timeout_)){
-            if(msg->buttons[6] && msg->buttons[7]){
+        //MARK: CAM_PROFILES"
+        // Left and Right shoulder shifts profiles
+        if((msg->buttons[controller_mappings_["L_shoulder"]] || msg->buttons[controller_mappings_["R_shoulder"]]) && ((this->get_clock()->now() - cam_move_profile_button_).seconds() > toggle_button_timeout_)){
+        if(msg->buttons[controller_mappings_["L_shoulder"]] && msg->buttons[controller_mappings_["R_shoulder"]]){
                 //do nothing
             }
-            else if(msg->buttons[6]){
+            else if(msg->buttons[controller_mappings_["L_shoulder"]]){
                 camera_movement_profile_index_--;
             }
             else{
@@ -276,7 +285,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             cam_move_profile_button_ = this->get_clock()->now();
         }
 
-        if (msg->buttons[4] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_))
+        if (msg->buttons[controller_mappings_["lights"]] && ((this->get_clock()->now() - last_lights_toggle_).seconds() > toggle_button_timeout_))
         {
             lights_toggle_ = !lights_toggle_; //toggle
             //MARK: add error checking
@@ -291,7 +300,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             last_lights_toggle_ = this->get_clock()->now();
         }
 
-        if (msg->buttons[1] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_))
+        if (msg->buttons[controller_mappings_["arm"]] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_))
         {
             arm_toggle_ = !arm_toggle_; //toggle
             //MARK: add error checking
@@ -316,7 +325,7 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
         }
 
 
-        if ((first_log || (v_ != prev_v_ || omega_ != prev_omega_)) || (((this->get_clock()->now() - last_speak_movement_).seconds() > 0.75)))
+        if ((first_log || (v_ != prev_v_ || omega_ != prev_omega_)) || (this->get_clock()->now() - last_speak_movement_).seconds() > 0.75)
         {
             first_log = false;
 
@@ -367,11 +376,10 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 }
 
 // RoverComm implementation
-std::string RoverComm::gameControllerType()
+void RoverComm::gameControllerType()
 {
     std::ifstream file("/proc/bus/input/devices");
     std::string   line;
-
     std::cout << "Checking connected game controllers...\n";
 
     // Looping through input device folders
@@ -383,21 +391,62 @@ std::string RoverComm::gameControllerType()
             // If found line with "Controller" or "Gamepad" in it.
             bool xbox   = line.find("Microsoft Xbox") != std::string::npos;
             bool powerA = line.find("PowerA NSW") != std::string::npos;
+            bool switchPro = line.find("Pro Controller") != std::string::npos;
             if (xbox)
             {
-                this->game_controller_type_ = "xbox";
+                game_controller_type_ = "xbox";
                 std::cout << game_controller_type_ << " controller detected" << std::endl;
-                return std::string("xbox");
             }
             else if (powerA)
             {
-                this->game_controller_type_ = "powerA";
+                game_controller_type_ = "powerA";
                 std::cout << game_controller_type_ << " controller detected" << std::endl;
-                return std::string("powerA"); //powerA has no analog triggers, will be default case
+            }
+            else if (switchPro)
+            {
+                game_controller_type_ = "switchPro";
+                std::cout << game_controller_type_ << " controller detected" << std::endl;
+                // std::cout << "Switch Pro controller detected" << std::endl;
+            }
+            else
+            {
+                std::cout << "Unknown controller detected" << std::endl;
             }
         }
+
+        if (game_controller_type_ == "xbox") // mappings for analog xbox
+        {
+            controller_mappings_["L_trigger"] = 4; // analog driving
+            controller_mappings_["R_trigger"] = 5; // analog driving
+            controller_mappings_["L_shoulder"] = 6; // button
+            controller_mappings_["R_shoulder"] = 7; // button
+            controller_mappings_["D_x"] = 6; // axes
+            controller_mappings_["D_y"] = 7; // axes
+            controller_mappings_["lights"] = 4; // button
+            controller_mappings_["arm"] = 1; // button
+            controller_mappings_["mode"] = -1; // TODO: Figure out later
+            controller_mappings_["L_joy_x"] = 0; // only x is used for steering
+            controller_mappings_["L_joy_y"] = 1; //
+        }
+        else // otherwise, assume no analog triggers
+        {
+            controller_mappings_["R_trigger"] = 4; // AXES: triggers unused bc digital, despite being in axes
+            controller_mappings_["R_trigger"] = 5; // AXES: 
+            controller_mappings_["L_shoulder"] = 9; // button
+            controller_mappings_["R_shoulder"] = 10; // button
+            controller_mappings_["D_up"] = 11; // axes
+            controller_mappings_["D_down"] = 12; // axes
+            controller_mappings_["D_left"] = 13; // axes
+            controller_mappings_["D_right"] = 14; // axes
+            controller_mappings_["lights"] = 2; // X
+            controller_mappings_["arm"] = 0; // A
+            controller_mappings_["mode"] = -1; // TODO: Figure out later
+            controller_mappings_["L_joy_x"] = 0; // AXES: only x is used for steering
+            controller_mappings_["L_joy_y"] = 1; // AXES:
+            controller_mappings_["R_joy_x"] = 2; // AXES: 
+            controller_mappings_["R_joy_y"] = 3; // only y is used for driving
+        }
     }
-    return "powerA"; //powerA has no analog triggers, will be default case
 }
 
 // Open and send XML config file to MCU
