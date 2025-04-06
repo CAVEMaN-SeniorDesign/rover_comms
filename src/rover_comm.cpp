@@ -214,8 +214,8 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
         v_ = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
     }
     else{
-        omega_ = msg->axes[controller_mappings_["L_joy_x"]]; // steering with left joy
-        v_    = msg->axes[controller_mappings_["R_joy_y"]]; // should be already in float type, driving with right joy
+        omega_ = std::ceil(msg->axes[controller_mappings_["L_joy_x"]]*100.0)/100.0; // steering with left joy
+        v_    = std::ceil((msg->axes[controller_mappings_["R_joy_y"]] + 0.14)*100.0)/100.0; // should be already in float type, driving with right joy
     }
 }
 
