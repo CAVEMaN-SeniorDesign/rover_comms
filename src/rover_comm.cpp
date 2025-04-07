@@ -11,6 +11,9 @@ RoverComm::RoverComm() : Node("rover_comm")
     odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Encoders>(
         "/odom_raw", 10);
 
+    imu_raw_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
+        "/imu_raw", 10);
+
     imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
         "/imu_data", 10);
 
@@ -44,7 +47,6 @@ RoverComm::RoverComm() : Node("rover_comm")
         );
     }
     
-
 }
 
 RoverComm::~RoverComm()
@@ -148,7 +150,8 @@ void RoverComm::ct_cmd_sender_callback(){
             if(posIdx >= move_sequence_.length){
                 posIdx = 0;
                 bool update = readCaveTalkSender(cavetalk_sender_config_);
-                update &= openAndSendConfigPID(cavetalk_config_);
+                update &= openAndSendConfigWheelPID(cavetalk_config_);
+                update &= openAndSendConfigSteerPID(cavetalk_config_);
                 if(!update) return;
             }
 
@@ -208,8 +211,8 @@ void RoverComm::calculateCamMovement(const sensor_msgs::msg::Joy::SharedPtr msg)
 void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
     if (game_controller_type_ == "xbox")
     {
-        double r_trig = -msg->axes[controller_mappings_["L_trigger"]] + 1; // Default unpressed is 1.0, down to -1 fully pressed
-        double l_trig = -msg->axes[controller_mappings_["R_trigger"]] + 1; //
+        double r_trig = -msg->axes[controller_mappings_["R_trigger"]] + 1; // Default unpressed is 1.0, down to -1 fully pressed
+        double l_trig = -msg->axes[controller_mappings_["L_trigger"]] + 1; //
         omega_ = msg->axes[controller_mappings_["L_joy_x"]];  // Angular velocity on horiz joy
         v_ = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
     }
@@ -217,6 +220,19 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
         omega_ = msg->axes[controller_mappings_["L_joy_x"]]; // steering with left joy
         v_    = msg->axes[controller_mappings_["R_joy_y"]]; // should be already in float type, driving with right joy
     }
+
+    if(clamp_move_cmds_){
+        if(speed_else_steer_clamp_){
+            double v_map = (.08 * 12.5 * MAX_LINEAR_VEL) - (omega_ * 0.4938 / 2.0);
+            if(v_ > v_map) v_ = v_map;
+            if(v_ < -v_map) v_ = -v_map;
+        }else{
+            double omega_map = 2.0*((.08 * 12.5 * MAX_LINEAR_VEL) - v_) / 0.4938;
+            if(omega_ > omega_map) omega_ = omega_map;
+            if(omega_ < -omega_map) omega_ = -omega_map;
+        }
+    }
+
 }
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
@@ -389,7 +405,7 @@ void RoverComm::gameControllerType()
         if (line.find("Name=") != std::string::npos)
         {
             // If found line with "Controller" or "Gamepad" in it.
-            bool xbox   = line.find("Microsoft Xbox") != std::string::npos;
+            bool xbox   = (line.find("Microsoft Xbox") != std::string::npos) || (line.find("Xbox Wireless Controller") != std::string::npos) ;
             bool powerA = line.find("PowerA NSW") != std::string::npos;
             bool switchPro = line.find("Pro Controller") != std::string::npos;
             if (xbox)
@@ -1400,6 +1416,24 @@ bool RoverComm::readOperatingModeConfig(std::string file){
         cam_profile_move_enable_ = checkXMLPositiveValue(cam_prof_move->GetText());
     }
 
+    tinyxml2::XMLElement *clamp_node = manual_mode->FirstChildElement("ClampedMovement");
+    if(clamp_node == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Not find Clamped Movement");
+        return false;
+    }else{
+        clamp_move_cmds_ = checkXMLPositiveValue(clamp_node->Attribute("enable"));
+    }
+
+    tinyxml2::XMLElement *clamp_type_node = clamp_node->FirstChildElement("SpeedOrSteerClamped");
+    if(clamp_type_node == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Not find Speed or Steer Clamped Movement");
+        return false;
+    }else{
+        speed_else_steer_clamp_ = checkXMLPositiveValue(clamp_type_node->GetText());
+    }
+
     tinyxml2::XMLElement *auto_mode = root->FirstChildElement("Auto");
     if (auto_mode == nullptr)
     {
@@ -1499,7 +1533,7 @@ bool RoverComm::readCaveTalkSender(std::string file){
     return true;
 }
 
-bool RoverComm::openAndSendConfigPID(std::string file)
+bool RoverComm::openAndSendConfigWheelPID(std::string file)
 {
     tinyxml2::XMLDocument doc;
     tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
@@ -1515,6 +1549,7 @@ bool RoverComm::openAndSendConfigPID(std::string file)
     double           Kp;
     double           Ki;
     double           Kd;
+    bool enable = false;
 
     tinyxml2::XMLElement *root = doc.FirstChildElement();
     if (root == nullptr)
@@ -1524,7 +1559,7 @@ bool RoverComm::openAndSendConfigPID(std::string file)
         return false;
     }
 
-    tinyxml2::XMLElement *config_pid = root->FirstChildElement("ConfigPID");
+    tinyxml2::XMLElement *config_pid = root->FirstChildElement("ConfigWheelSpeedPID");
     if (config_pid == nullptr)
     {
         RCLCPP_INFO(this->get_logger(), "Error finding ConfigMotor");
@@ -1617,6 +1652,142 @@ bool RoverComm::openAndSendConfigPID(std::string file)
         }
     }
 
-    talker->SpeakConfigWheelSpeedControl(wheel_params[0], wheel_params[1], wheel_params[2], wheel_params[3], true);
+    tinyxml2::XMLElement *enable_node = config_pid->FirstChildElement("WheelPIDEnabled");
+    if (enable_node != nullptr)
+    {
+        enable = checkXMLPositiveValue(enable_node->GetText());
+    }else{
+        RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find WheelPIDEnabled");
+        // std::cout << "Error parsing file: Couldnt find " << wheel_name << std::endl;
+        return false;
+    }
+
+    talker->SpeakConfigWheelSpeedControl(wheel_params[0], wheel_params[1], wheel_params[2], wheel_params[3], enable);
+    return true;
+}
+
+bool RoverComm::openAndSendConfigSteerPID(std::string file)
+{
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError    error = doc.LoadFile(file.c_str());
+    // std::cout << error << std::endl;
+    if (error != tinyxml2::XML_SUCCESS)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error opening file: %s", file.c_str());
+        // std::cout << "Open File Error" << std::endl;
+        return false;
+    }
+
+    cave_talk::PID steer_params = cave_talk::PID();
+    double           Kp;
+    double           Ki;
+    double           Kd;
+    bool enable = false;
+
+    tinyxml2::XMLElement *root = doc.FirstChildElement();
+    if (root == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding root, good luck");
+        // std::cout << "Error parsing file: COuldn't find root, you're fucked" << std::endl;
+        return false;
+    }
+
+    tinyxml2::XMLElement *config_pid = root->FirstChildElement("ConfigSteerPID");
+    if (config_pid == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error finding ConfigSteerPID");
+        // std::cout << "Error parsing file: Couldn't find ConfigSteerPID" << std::endl;
+        return false;
+    }
+
+    if(!checkXMLPositiveValue(config_pid->Attribute("send"))){
+        RCLCPP_INFO(this->get_logger(), "Don't send config pid, return true");
+        return true;
+    }
+
+    tinyxml2::XMLElement *steer_node = config_pid->FirstChildElement("turn_rate_params");
+    if (steer_node == nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find turn_rate_params");
+        // std::cout << "Error parsing file: Couldnt find " << wheel_name << std::endl;
+        return false;
+    }
+
+    int extractResult = -1;
+
+    tinyxml2::XMLElement *prop_gain_node = steer_node->FirstChildElement("Kp");
+    if (prop_gain_node != nullptr)
+    {
+        extractResult = prop_gain_node->QueryDoubleText(&Kp);
+
+        if (extractResult == 0)
+        {
+            steer_params.set_kp(Kp);
+            RCLCPP_INFO(this->get_logger(), "Prop Gain: %f", Kp);
+            // std::cout << Kp << std::endl;
+        }
+        else
+        {
+            std::cout << "Failed to extract Proportional Gain" << std::endl;
+        }
+    }
+    else
+    {
+        steer_params.set_kp(0);
+    }
+
+    tinyxml2::XMLElement *integ_gain_node = steer_node->FirstChildElement("Ki");
+    if (integ_gain_node != nullptr)
+    {
+        extractResult = integ_gain_node->QueryDoubleText(&Ki);
+
+        if (extractResult == 0)
+        {
+            steer_params.set_ki(Ki);
+            RCLCPP_INFO(this->get_logger(), "Ki: %f", Ki);
+            // std::cout << Ki << std::endl;
+        }
+        else
+        {
+            std::cout << "Failed to extract Ki" << std::endl;
+        }
+    }
+    else
+    {
+        steer_params.set_ki(-1);
+    }
+
+    tinyxml2::XMLElement *derv_gain_node = steer_node->FirstChildElement("Kd");
+    if (derv_gain_node != nullptr)
+    {
+        extractResult = derv_gain_node->QueryDoubleText(&Kd);
+
+        if (extractResult == 0)
+        {
+            steer_params.set_kd(Kd);
+            RCLCPP_INFO(this->get_logger(), "Kd: %f", Kd);
+            // std::cout << Kd << std::endl;
+        }
+        else
+        {
+            std::cout << "Failed to extract Kd" << std::endl;
+        }
+    }
+    else
+    {
+        steer_params.set_kd(-1);
+    }
+
+    tinyxml2::XMLElement *enable_node = config_pid->FirstChildElement("SteerPIDEnabled");
+    if (enable_node != nullptr)
+    {
+        enable = checkXMLPositiveValue(enable_node->GetText());
+    }else{
+        RCLCPP_INFO(this->get_logger(), "Error parsing file: Couldn't find SteerPIDEnabled");
+        // std::cout << "Error parsing file: Couldnt find " << wheel_name << std::endl;
+        return false;
+    }
+
+    talker->SpeakConfigSteeringControl(steer_params, enable);
     return true;
 }
