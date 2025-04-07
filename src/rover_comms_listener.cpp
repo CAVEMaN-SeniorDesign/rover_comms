@@ -136,14 +136,13 @@ void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk
     // msg.yaw_rads_per_sec = IMU.gyro().yaw_radians_per_second();
 
     rover_comm_node_->odom_read_pub_->publish(msg);
-
-    MadgwickAHRSupdateIMU(
+       MadgwickAHRSupdateIMU(
+	IMU.gyro().roll_radians_per_second(),
+        IMU.gyro().pitch_radians_per_second(),
+        IMU.gyro().yaw_radians_per_second(),
         IMU.accel().x_meters_per_second_squared(),
         IMU.accel().y_meters_per_second_squared(),
         IMU.accel().z_meters_per_second_squared(),
-        IMU.gyro().roll_radians_per_second(),
-        IMU.gyro().pitch_radians_per_second(),
-        IMU.gyro().yaw_radians_per_second(),
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - prev_time_pt_)
         );
 
@@ -161,7 +160,16 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
                                                double ax, double ay, double az, std::chrono::milliseconds dt)
 {
     auto imu_msg = sensor_msgs::msg::Imu();
-
+    auto imu_msg_raw = sensor_msgs::msg::Imu();
+    imu_msg_raw.header.stamp = rover_comm_node_->now();
+    imu_msg_raw.linear_acceleration.x = ax;
+    imu_msg_raw.linear_acceleration.y = ay;
+    imu_msg_raw.linear_acceleration.z = az;
+    imu_msg_raw.angular_velocity.x = gx;
+    imu_msg_raw.angular_velocity.y = gy;
+    imu_msg_raw.angular_velocity.z = gz;
+    rover_comm_node_->imu_raw_pub_->publish(imu_msg_raw);
+    
     double beta = 0.1;
     double recipNorm;
     double s0, s1, s2, s3;
@@ -234,6 +242,7 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
 
     // MARK: EXPORT TO RTAB
     imu_msg.header.stamp = rover_comm_node_->now();
+
     imu_msg.orientation.w = q0_;
     imu_msg.orientation.x = q1_;
     imu_msg.orientation.y = q2_;

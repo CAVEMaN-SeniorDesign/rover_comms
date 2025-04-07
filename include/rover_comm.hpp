@@ -72,11 +72,14 @@ class RoverComm : public rclcpp::Node
         rclcpp::Publisher<rover_interfaces::msg::Encoders>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_; // public to be accessed from callbacks
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
+	rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_raw_pub_; // public to be accessed from callbacks
         bool looping       = true;
         bool waiting_booga = true;
         bool manual_enable_ = true; // true if we are in manual mode
         bool auto_enable_   = true; // true if we are in auto mode
         bool CT_sender_enable_ = true; // true if we are sending cmds from xml sender
+        bool clamp_move_cmds_ = true;
+        bool speed_else_steer_clamp_ = true;
 
     private:
         void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
@@ -91,7 +94,8 @@ class RoverComm : public rclcpp::Node
         bool openAndSendConfigServoWheels(std::string file);
         bool openAndSendConfigServoCams(std::string file);
         bool openAndSendConfigMotor(std::string file);
-        bool openAndSendConfigPID(std::string file);
+        bool openAndSendConfigWheelPID(std::string file);
+        bool openAndSendConfigSteerPID(std::string file);
         bool readOperatingModeConfig(std::string file);
         bool readCameraMovementConfig(std::string file);
         bool readCaveTalkSender(std::string file);
