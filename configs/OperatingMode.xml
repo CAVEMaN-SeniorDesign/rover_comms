@@ -2,8 +2,8 @@
     <Manual enable="true">
         <ManualCameraMovement>true</ManualCameraMovement>
         <CameraProfileMovement>true</CameraProfileMovement>
-        <ClampedMovement enable="true">
-            <SpeedOrSteerClamped>true</SpeedClamped> 
+        <ClampedMovement enable="false">
+            <SpeedOrSteerClamped>true</SpeedOrSteerClamped> 
             <!-- true for Speed Clamped, false for steer clamped -->
         </ClampedMovement>
     </Manual>

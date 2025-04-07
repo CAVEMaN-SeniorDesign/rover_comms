@@ -408,6 +408,8 @@ void RoverComm::gameControllerType()
             bool xbox   = (line.find("Microsoft Xbox") != std::string::npos) || (line.find("Xbox Wireless Controller") != std::string::npos) ;
             bool powerA = line.find("PowerA NSW") != std::string::npos;
             bool switchPro = line.find("Pro Controller") != std::string::npos;
+            bool xbox_wired = line.find("Generic X-Box pad") != std::string::npos;
+
             if (xbox)
             {
                 game_controller_type_ = "xbox";
@@ -424,6 +426,10 @@ void RoverComm::gameControllerType()
                 std::cout << game_controller_type_ << " controller detected" << std::endl;
                 // std::cout << "Switch Pro controller detected" << std::endl;
             }
+            else if (xbox_wired){
+                game_controller_type_ = "wired_xbox";
+                std::cout << game_controller_type_ << " controller detected" << std::endl;
+            }
             else
             {
                 std::cout << "Unknown controller detected" << std::endl;
@@ -439,6 +445,20 @@ void RoverComm::gameControllerType()
             controller_mappings_["D_x"] = 6; // axes
             controller_mappings_["D_y"] = 7; // axes
             controller_mappings_["lights"] = 4; // button
+            controller_mappings_["arm"] = 1; // button
+            controller_mappings_["mode"] = -1; // TODO: Figure out later
+            controller_mappings_["L_joy_x"] = 0; // only x is used for steering
+            controller_mappings_["L_joy_y"] = 1; //
+        }
+        else if (game_controller_type_ == "wired_xbox")
+        {
+            controller_mappings_["L_trigger"] = 2; // analog driving
+            controller_mappings_["R_trigger"] = 5; // analog driving
+            controller_mappings_["L_shoulder"] = 4; // button
+            controller_mappings_["R_shoulder"] = 5; // button
+            controller_mappings_["D_x"] = 6; // axes
+            controller_mappings_["D_y"] = 7; // axes
+            controller_mappings_["lights"] = 3; // button
             controller_mappings_["arm"] = 1; // button
             controller_mappings_["mode"] = -1; // TODO: Figure out later
             controller_mappings_["L_joy_x"] = 0; // only x is used for steering

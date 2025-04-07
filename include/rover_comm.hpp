@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "cave_talk.h"
 #include "rover_comms_serial.hpp"
@@ -72,9 +73,13 @@ class RoverComm : public rclcpp::Node
         rclcpp::Publisher<rover_interfaces::msg::Encoders>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_; // public to be accessed from callbacks
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
-	rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_raw_pub_; // public to be accessed from callbacks
+	    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_raw_pub_; // public to be accessed from callbacks
         bool looping       = true;
         bool waiting_booga = true;
+        
+//        vector<double> imu_samples; // 
+        int imu_sample_cap = 5;
+
         bool manual_enable_ = true; // true if we are in manual mode
         bool auto_enable_   = true; // true if we are in auto mode
         bool CT_sender_enable_ = true; // true if we are sending cmds from xml sender

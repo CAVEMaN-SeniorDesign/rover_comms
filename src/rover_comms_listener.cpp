@@ -127,17 +127,24 @@ void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk
     msg.total_pulses_encoder_wheel_3      = encoder_wheel_3.total_pulses();
     msg.rate_rads_per_sec_encoder_wheel_3 = encoder_wheel_3.rate_radians_per_second();
 
-    // Removed to publish directly to imu topic
-    // msg.x_accel_mpss = IMU.accel().x_meters_per_second_squared(); 
-    // msg.y_accel_mpss = IMU.accel().y_meters_per_second_squared();
-    // msg.z_accel_mpss = IMU.accel().z_meters_per_second_squared();
-    // msg.roll_rads_per_sec = IMU.gyro().roll_radians_per_second();
-    // msg.pitch_rads_per_sec = IMU.gyro().pitch_radians_per_second();
-    // msg.yaw_rads_per_sec = IMU.gyro().yaw_radians_per_second();
-
     rover_comm_node_->odom_read_pub_->publish(msg);
-       MadgwickAHRSupdateIMU(
-	IMU.gyro().roll_radians_per_second(),
+
+    auto imu_msg_raw = sensor_msgs::msg::Imu();
+    imu_msg_raw.header.stamp = rover_comm_node_->now();
+    imu_msg_raw.linear_acceleration.x = IMU.accel().x_meters_per_second_squared();
+    imu_msg_raw.linear_acceleration.y = IMU.accel().y_meters_per_second_squared();
+    imu_msg_raw.linear_acceleration.z = IMU.accel().z_meters_per_second_squared();
+    imu_msg_raw.angular_velocity.x = IMU.gyro().roll_radians_per_second();
+    imu_msg_raw.angular_velocity.y = IMU.gyro().pitch_radians_per_second();
+    imu_msg_raw.angular_velocity.z = IMU.gyro().yaw_radians_per_second();
+    imu_msg_raw.orientation.x = IMU.quat().x();
+    imu_msg_raw.orientation.y = IMU.quat().y();
+    imu_msg_raw.orientation.z = IMU.quat().z();
+    imu_msg_raw.orientation.w = IMU.quat().w();
+    rover_comm_node_->imu_raw_pub_->publish(imu_msg_raw);
+
+    MadgwickAHRSupdateIMU(
+	    IMU.gyro().roll_radians_per_second(),
         IMU.gyro().pitch_radians_per_second(),
         IMU.gyro().yaw_radians_per_second(),
         IMU.accel().x_meters_per_second_squared(),
@@ -160,15 +167,6 @@ void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
                                                double ax, double ay, double az, std::chrono::milliseconds dt)
 {
     auto imu_msg = sensor_msgs::msg::Imu();
-    auto imu_msg_raw = sensor_msgs::msg::Imu();
-    imu_msg_raw.header.stamp = rover_comm_node_->now();
-    imu_msg_raw.linear_acceleration.x = ax;
-    imu_msg_raw.linear_acceleration.y = ay;
-    imu_msg_raw.linear_acceleration.z = az;
-    imu_msg_raw.angular_velocity.x = gx;
-    imu_msg_raw.angular_velocity.y = gy;
-    imu_msg_raw.angular_velocity.z = gz;
-    rover_comm_node_->imu_raw_pub_->publish(imu_msg_raw);
     
     double beta = 0.1;
     double recipNorm;
