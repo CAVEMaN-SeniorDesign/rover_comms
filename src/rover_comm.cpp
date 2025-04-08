@@ -174,8 +174,8 @@ void RoverComm::calculateCamMovement(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
     if(cam_move_manual_enable_)
     {   
-        int add_cam_pan = 0;
-        int add_cam_tilt = 0;
+        double add_cam_pan = 0;
+        double add_cam_tilt = 0;
         if(game_controller_type_ == "xbox")
         {
             add_cam_pan = ((msg->axes[controller_mappings_["D_x"]]) * 3.1415926 / 32.0);
