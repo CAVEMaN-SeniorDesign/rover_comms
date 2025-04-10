@@ -42,7 +42,7 @@
 
 struct CameraMovement
 {
-    static const int maxLength = 10;
+    static const int maxLength = 20;
     int length;
     int index                          = 0;
     double cam_pan_radians[maxLength]  = {0U};
