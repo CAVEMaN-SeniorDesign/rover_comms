@@ -174,8 +174,8 @@ void RoverComm::calculateCamMovement(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
     if(cam_move_manual_enable_)
     {   
-        int add_cam_pan = 0;
-        int add_cam_tilt = 0;
+        double add_cam_pan = 0;
+        double add_cam_tilt = 0;
         if(game_controller_type_ == "xbox")
         {
             add_cam_pan = ((msg->axes[controller_mappings_["D_x"]]) * 3.1415926 / 32.0);
@@ -398,6 +398,8 @@ void RoverComm::gameControllerType()
     std::string   line;
     std::cout << "Checking connected game controllers...\n";
 
+    const char* ros_distro = std::getenv("ROS_DISTRO");
+    std::string ros_distro_str(ros_distro);
     // Looping through input device folders
     while (std::getline(file, line))
     {
@@ -414,6 +416,9 @@ void RoverComm::gameControllerType()
             {
                 game_controller_type_ = "xbox";
                 std::cout << game_controller_type_ << " controller detected" << std::endl;
+                powerA = false;
+                switchPro = false;
+                xbox_wired = false;
             }
             else if (powerA)
             {
@@ -438,17 +443,33 @@ void RoverComm::gameControllerType()
 
         if (game_controller_type_ == "xbox") // mappings for analog xbox
         {
-            controller_mappings_["L_trigger"] = 4; // analog driving
-            controller_mappings_["R_trigger"] = 5; // analog driving
-            controller_mappings_["L_shoulder"] = 6; // button
-            controller_mappings_["R_shoulder"] = 7; // button
-            controller_mappings_["D_x"] = 6; // axes
-            controller_mappings_["D_y"] = 7; // axes
-            controller_mappings_["lights"] = 4; // button
-            controller_mappings_["arm"] = 1; // button
-            controller_mappings_["mode"] = -1; // TODO: Figure out later
-            controller_mappings_["L_joy_x"] = 0; // only x is used for steering
-            controller_mappings_["L_joy_y"] = 1; //
+            if (ros_distro_str == "humble"){
+                controller_mappings_["L_trigger"] = 2; // analog driving
+                controller_mappings_["R_trigger"] = 5; // analog driving
+                controller_mappings_["L_shoulder"] = 4; // button
+                controller_mappings_["R_shoulder"] = 5; // button
+                controller_mappings_["D_x"] = 6; // axes
+                controller_mappings_["D_y"] = 7; // axes
+                controller_mappings_["lights"] = 3; // button
+                controller_mappings_["arm"] = 1; // button
+                controller_mappings_["mode"] = -1; // TODO: Figure out later
+                controller_mappings_["L_joy_x"] = 0; // only x is used for steering
+                controller_mappings_["L_joy_y"] = 1; //
+            }
+            else{
+                controller_mappings_["L_trigger"] = 4; // analog driving
+                controller_mappings_["R_trigger"] = 5; // analog driving
+                controller_mappings_["L_shoulder"] = 6; // button
+                controller_mappings_["R_shoulder"] = 7; // button
+                controller_mappings_["D_x"] = 6; // axes
+                controller_mappings_["D_y"] = 7; // axes
+                controller_mappings_["lights"] = 4; // button
+                controller_mappings_["arm"] = 1; // button
+                controller_mappings_["mode"] = -1; // TODO: Figure out later
+                controller_mappings_["L_joy_x"] = 0; // only x is used for steering
+                controller_mappings_["L_joy_y"] = 1; //
+            }
+
         }
         else if (game_controller_type_ == "wired_xbox")
         {

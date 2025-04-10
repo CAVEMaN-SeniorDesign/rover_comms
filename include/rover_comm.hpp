@@ -12,6 +12,7 @@
 #include <cmath>
 #include <algorithm>
 #include <unordered_map>
+#include <cstdlib>   // for std::get_env for controller selection
 
 #include <csignal>
 #include <unistd.h>  // For sleep()
