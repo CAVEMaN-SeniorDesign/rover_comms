@@ -163,6 +163,11 @@ void RoverCommsListener::HearLog(const char *const log)
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard log: %s", log);
 }
 
+void RoverCommsListener::HearReset(const bool reset)
+{
+    RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard Reset: %d", reset);
+}
+
 void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
                                                double ax, double ay, double az, std::chrono::milliseconds dt)
 {
