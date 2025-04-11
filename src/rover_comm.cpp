@@ -1,4 +1,7 @@
 #include "rover_comm.hpp"
+#include "rover_comms_serial.hpp"
+
+#include <thread>
 
 
 RoverComm::RoverComm() : Node("rover_comm")
@@ -79,6 +82,21 @@ void RoverComm::listen_callback()
         if (CAVE_TALK_ERROR_NONE != error)
         {
             RCLCPP_INFO(this->get_logger(), "Listener error %s", CaveTalk_ErrorToString(error).c_str());
+            
+            if((error == CAVE_TALK_ERROR_VERSION) || (error == CAVE_TALK_ERROR_ID) || (error == CAVE_TALK_ERROR_PARSE) || (error == CAVE_TALK_ERROR_INCOMPLETE))
+            {
+                talker->SpeakReset(true);
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+                std::string port = rover_comms_serial::GetPort();
+                uint32_t baudrate = rover_comms_serial::GetBaudrate();
+                rover_comms_serial::Stop();
+                rover_comms_serial::Start(port, baudrate);
+
+                talker->SpeakReset(false);
+            }
+            
         }
     }
     else

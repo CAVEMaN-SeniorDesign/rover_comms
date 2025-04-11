@@ -1,4 +1,5 @@
 #include "rover_comms_listener.hpp"
+#include "rover_comms_serial.hpp"
 
 
 // ListenerCallbacks implementation
@@ -166,6 +167,17 @@ void RoverCommsListener::HearLog(const char *const log)
 void RoverCommsListener::HearReset(const bool reset)
 {
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard Reset: %d", reset);
+
+    if(reset)
+    {    //stop rx & tx
+        //flush buffers
+        std::string port = rover_comms_serial::GetPort();
+        uint32_t baudrate = rover_comms_serial::GetBaudrate();
+        rover_comms_serial::Stop();
+
+        //restart rx & tx
+        rover_comms_serial::Start(port, baudrate);
+    }
 }
 
 void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
