@@ -34,6 +34,10 @@ find_package(sensor_msgs REQUIRED)
 find_package(rover_interfaces REQUIRED)
 find_package(Catch2 3 REQUIRED)
 find_package(serial REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 add_library(rover_comms_serial STATIC src/rover_comms_serial.cpp)
 ament_target_dependencies(rover_comms_serial rclcpp std_msgs serial ament_index_cpp)
@@ -60,7 +64,7 @@ target_link_libraries(rover_comms_serial
 )
 
 add_executable(rover_comms src/main.cpp src/rover_comm.cpp src/rover_comms_listener.cpp external/tinyxml/src/tinyxml2.cpp)
-ament_target_dependencies(rover_comms rclcpp sensor_msgs std_msgs rover_interfaces serial)
+ament_target_dependencies(rover_comms rclcpp sensor_msgs std_msgs rover_interfaces serial nav_msgs tf2 tf2_ros tf2_geometry_msgs)
 
 set(PROTOBUF_INSTALL_DIR ${CAVE_TALK_DIR}/external/protobuf/_build/protobuf-install)
 add_subdirectory(${CAVETALK_DIR}/external/protobuf/third_party/abseil-cpp)

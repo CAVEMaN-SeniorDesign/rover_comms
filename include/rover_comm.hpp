@@ -8,6 +8,10 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 #include "rover_interfaces/msg/encoders.hpp"
 #include <cmath>
 #include <algorithm>
@@ -75,6 +79,7 @@ class RoverComm : public rclcpp::Node
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_; // public to be accessed from callbacks
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
 	    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_raw_pub_; // public to be accessed from callbacks
+        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pub_;
         bool looping       = true;
         bool waiting_booga = true;
         
@@ -108,9 +113,15 @@ class RoverComm : public rclcpp::Node
         bool checkXMLPositiveValue(std::string value);
         void calculateCamMovement(const sensor_msgs::msg::Joy::SharedPtr msg);
         void calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg);
+        void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+        void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+        void calculateGoal();
+
 
         // sub for /cmd_vel_joy topics and publish to joystick topic
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
+        rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_filtered_sub_;
         std::string this_pkg_path = ament_index_cpp::get_package_share_directory("rover_comms");
 
         // config files
@@ -126,7 +137,11 @@ class RoverComm : public rclcpp::Node
         double omega_               = 0;
         double prev_v_              = 0;
         double prev_omega_          = 0;
+        double v_auto_              = 0;
+        double omega_auto_          = 0;
         
+        nav_msgs::msg::Odometry::SharedPtr odom_filtered_;
+        geometry_msgs::msg::PoseStamped goal_;
         double max_wheel_speed_rps_ = 18.75;
         double v_overrider_ctsender_;
         double omega_overrider_ctsender_;
@@ -143,6 +158,7 @@ class RoverComm : public rclcpp::Node
         bool cam_profile_move_enable_ = true;
         bool lights_toggle_         = false;
         bool arm_toggle_            = false;
+        bool mode_toggle_           = false;
         bool first_talk_            = true; // bool to assist syncing with MCU
 
         // This is here just so we can see all the available mappings.
@@ -178,11 +194,12 @@ class RoverComm : public rclcpp::Node
         rclcpp::Time last_speak_movement_ = this->get_clock()->now();
         rclcpp::Time last_lights_toggle_  = this->get_clock()->now();
         rclcpp::Time last_arm_toggle_     = this->get_clock()->now();
+        rclcpp::Time last_mode_toggle_     = this->get_clock()->now();
         rclcpp::Time cam_move_last_move_time_ = this->get_clock()->now();
         rclcpp::Time CT_sender_last_move_time_ = this->get_clock()->now();
         rclcpp::Time cam_move_profile_button_ = this->get_clock()->now();
+        rclcpp::Time last_set_goal_ = this->get_clock()->now();
         double toggle_button_timeout_     = 0.5; // half-second time-out
-
 };
 
 #endif // ROVER_COMM_HPP

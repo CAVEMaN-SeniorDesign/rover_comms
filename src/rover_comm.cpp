@@ -1,7 +1,4 @@
 #include "rover_comm.hpp"
-#include "rover_comms_serial.hpp"
-
-#include <thread>
 
 
 RoverComm::RoverComm() : Node("rover_comm")
@@ -20,6 +17,18 @@ RoverComm::RoverComm() : Node("rover_comm")
     imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
         "/imu_data", 10);
 
+    cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+        "/cmd_vel", 25, std::bind(&RoverComm::cmd_vel_callback, this, std::placeholders::_1));
+
+    odom_filtered_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+        "/odometry/filtered", 10,
+        std::bind(&RoverComm::odomCallback, this, std::placeholders::_1)
+    );
+
+    goal_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
+        "/goal_pose", 10);
+
+    
     // Check for connected game controllers
     this->gameControllerType();
 
@@ -82,21 +91,6 @@ void RoverComm::listen_callback()
         if (CAVE_TALK_ERROR_NONE != error)
         {
             RCLCPP_INFO(this->get_logger(), "Listener error %s", CaveTalk_ErrorToString(error).c_str());
-            
-            if((error == CAVE_TALK_ERROR_VERSION) || (error == CAVE_TALK_ERROR_ID) || (error == CAVE_TALK_ERROR_PARSE) || (error == CAVE_TALK_ERROR_INCOMPLETE))
-            {
-                talker->SpeakReset(true);
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
-
-                std::string port = rover_comms_serial::GetPort();
-                uint32_t baudrate = rover_comms_serial::GetBaudrate();
-                rover_comms_serial::Stop();
-                rover_comms_serial::Start(port, baudrate);
-
-                talker->SpeakReset(false);
-            }
-            
         }
     }
     else
@@ -229,10 +223,20 @@ void RoverComm::calculateCamMovement(const sensor_msgs::msg::Joy::SharedPtr msg)
 void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
     if (game_controller_type_ == "xbox")
     {
-        double r_trig = -msg->axes[controller_mappings_["R_trigger"]] + 1; // Default unpressed is 1.0, down to -1 fully pressed
-        double l_trig = -msg->axes[controller_mappings_["L_trigger"]] + 1; //
-        omega_ = msg->axes[controller_mappings_["L_joy_x"]];  // Angular velocity on horiz joy
-        v_ = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
+        // addition for autonomous mode, lockout manual movement, read from /cmd_vel instead.
+        if (mode_toggle_){
+            v_ = v_auto_ * MAX_LINEAR_VEL;//normalize to MAX_LINEAR_VEL
+            if((v_ < 1.0) && (v_ < 0.4)){
+		v_ = 1.0;	
+	    }
+	    omega_ = omega_auto_;
+        }
+        else{
+            double r_trig = -msg->axes[controller_mappings_["R_trigger"]] + 1; // Default unpressed is 1.0, down to -1 fully pressed
+            double l_trig = -msg->axes[controller_mappings_["L_trigger"]] + 1; //
+            omega_ = msg->axes[controller_mappings_["L_joy_x"]];  // Angular velocity on horiz joy
+            v_ = (r_trig - l_trig) * (MAX_LINEAR_VEL / 2.0);//normalize to MAX_LINEAR_VEL
+        }
     }
     else{
         omega_ = msg->axes[controller_mappings_["L_joy_x"]]; // steering with left joy
@@ -251,6 +255,46 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
         }
     }
 
+}
+
+void RoverComm::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg){
+    v_auto_ = msg->linear.x;
+    omega_auto_ = msg->angular.z;
+}
+
+void RoverComm::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
+    // Just gets current odometry/filtered pose and saves for use later
+    odom_filtered_ = msg;
+}
+
+void RoverComm::calculateGoal(){
+    double x = odom_filtered_->pose.pose.position.x;
+    double y = odom_filtered_->pose.pose.position.y;
+
+    // Extract yaw from quaternion
+    tf2::Quaternion q(
+        odom_filtered_->pose.pose.orientation.x,
+        odom_filtered_->pose.pose.orientation.y,
+        odom_filtered_->pose.pose.orientation.z,
+        odom_filtered_->pose.pose.orientation.w
+    );
+    double roll, pitch, yaw;
+    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
+    // Compute 5 meters forward
+    double goal_x = x + 2.0 * std::cos(yaw);
+    double goal_y = y + 2.0 * std::sin(yaw);
+
+    // Create goal message
+    goal_.header.stamp = this->now();
+    goal_.header.frame_id = "map";
+    goal_.pose.position.x = goal_x;
+    goal_.pose.position.y = goal_y;
+    goal_.pose.position.z = 0.0;
+    goal_.pose.orientation = odom_filtered_->pose.pose.orientation; // same heading
+
+    // RCLCPP_INFO(this->get_logger(), "Publishing goal at (%.2f, %.2f)", goal_x, goal_y);
+    goal_pub_->publish(goal_);
 }
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
@@ -334,6 +378,23 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             last_lights_toggle_ = this->get_clock()->now();
         }
 
+        if(msg->buttons[controller_mappings_["mode"]] && ((this->get_clock()->now() - last_mode_toggle_).seconds() > toggle_button_timeout_))
+        {
+            mode_toggle_ = !mode_toggle_;
+            // no speak mode, only switch drive
+
+            if (mode_toggle_)
+            {
+                RCLCPP_INFO(this->get_logger(), "Rover in Auto");
+            }
+            else
+            {
+                RCLCPP_INFO(this->get_logger(), "Rover in Manual");
+            }
+
+            last_mode_toggle_ = this->get_clock()->now();
+        }
+
         if (msg->buttons[controller_mappings_["arm"]] && ((this->get_clock()->now() - last_arm_toggle_).seconds() > toggle_button_timeout_))
         {
             arm_toggle_ = !arm_toggle_; //toggle
@@ -356,6 +417,12 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             }
 
             last_arm_toggle_ = this->get_clock()->now();
+        }
+
+        if (msg->buttons[controller_mappings_["goal"]] && ((this->get_clock()->now() - last_set_goal_).seconds() > toggle_button_timeout_))
+        {
+            calculateGoal();
+            last_set_goal_ = this->get_clock()->now();
         }
 
 
@@ -425,7 +492,7 @@ void RoverComm::gameControllerType()
         if (line.find("Name=") != std::string::npos)
         {
             // If found line with "Controller" or "Gamepad" in it.
-            bool xbox   = (line.find("Microsoft Xbox") != std::string::npos) || (line.find("Xbox Wireless Controller") != std::string::npos) ;
+            bool xbox   = ((line.find("Microsoft Xbox") != std::string::npos) || (line.find("Xbox Wireless Controller") != std::string::npos));
             bool powerA = line.find("PowerA NSW") != std::string::npos;
             bool switchPro = line.find("Pro Controller") != std::string::npos;
             bool xbox_wired = line.find("Generic X-Box pad") != std::string::npos;
@@ -470,9 +537,10 @@ void RoverComm::gameControllerType()
                 controller_mappings_["D_y"] = 7; // axes
                 controller_mappings_["lights"] = 3; // button
                 controller_mappings_["arm"] = 1; // button
-                controller_mappings_["mode"] = -1; // TODO: Figure out later
+                controller_mappings_["mode"] = 7; // TODO: Figure out later
                 controller_mappings_["L_joy_x"] = 0; // only x is used for steering
                 controller_mappings_["L_joy_y"] = 1; //
+                controller_mappings_["goal"] = 0;
             }
             else{
                 controller_mappings_["L_trigger"] = 4; // analog driving
@@ -486,6 +554,7 @@ void RoverComm::gameControllerType()
                 controller_mappings_["mode"] = -1; // TODO: Figure out later
                 controller_mappings_["L_joy_x"] = 0; // only x is used for steering
                 controller_mappings_["L_joy_y"] = 1; //
+                controller_mappings_["goal"] = 0;
             }
 
         }
@@ -505,21 +574,32 @@ void RoverComm::gameControllerType()
         }
         else // otherwise, assume no analog triggers
         {
-            controller_mappings_["R_trigger"] = 4; // AXES: triggers unused bc digital, despite being in axes
-            controller_mappings_["R_trigger"] = 5; // AXES: 
-            controller_mappings_["L_shoulder"] = 9; // button
-            controller_mappings_["R_shoulder"] = 10; // button
-            controller_mappings_["D_up"] = 11; // axes
-            controller_mappings_["D_down"] = 12; // axes
-            controller_mappings_["D_left"] = 13; // axes
-            controller_mappings_["D_right"] = 14; // axes
-            controller_mappings_["lights"] = 2; // X
-            controller_mappings_["arm"] = 0; // A
-            controller_mappings_["mode"] = -1; // TODO: Figure out later
-            controller_mappings_["L_joy_x"] = 0; // AXES: only x is used for steering
-            controller_mappings_["L_joy_y"] = 1; // AXES:
-            controller_mappings_["R_joy_x"] = 2; // AXES: 
-            controller_mappings_["R_joy_y"] = 3; // only y is used for driving
+            if (ros_distro_str == "humble"){
+                controller_mappings_["L_trigger"] = 2; // analog driving
+                controller_mappings_["R_trigger"] = 5; // analog driving
+                controller_mappings_["L_shoulder"] = 4; // button
+                controller_mappings_["R_shoulder"] = 5; // button
+                controller_mappings_["D_x"] = 6; // axes
+                controller_mappings_["D_y"] = 7; // axes
+                controller_mappings_["lights"] = 3; // button
+                controller_mappings_["arm"] = 1; // button
+                controller_mappings_["mode"] = 7; // TODO: Figure out later
+                controller_mappings_["L_joy_x"] = 0; // only x is used for steering
+                controller_mappings_["L_joy_y"] = 1; //
+            }
+            else{
+                controller_mappings_["L_trigger"] = 4; // analog driving
+                controller_mappings_["R_trigger"] = 5; // analog driving
+                controller_mappings_["L_shoulder"] = 6; // button
+                controller_mappings_["R_shoulder"] = 7; // button
+                controller_mappings_["D_x"] = 6; // axes
+                controller_mappings_["D_y"] = 7; // axes
+                controller_mappings_["lights"] = 4; // button
+                controller_mappings_["arm"] = 1; // button
+                controller_mappings_["mode"] = -1; // TODO: Figure out later
+                controller_mappings_["L_joy_x"] = 0; // only x is used for steering
+                controller_mappings_["L_joy_y"] = 1; //
+            }
         }
     }
 }

@@ -63,20 +63,11 @@ void SetPort(const std::string &port)
     }
 }
 
-std::string GetPort(void)
-{
-    return serial_port.getPort();
-}
-
 void SetBaudrate(const uint32_t baudrate)
 {
     serial_port.setBaudrate(baudrate);
 }
 
-uint32_t GetBaudrate()
-{
-    return serial_port.getBaudrate();
-}
 
 CaveTalk_Error_t Send(const void *const data, const size_t size)
 {
