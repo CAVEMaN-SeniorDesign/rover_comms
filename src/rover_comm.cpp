@@ -1,6 +1,5 @@
 #include "rover_comm.hpp"
 
-
 RoverComm::RoverComm() : Node("rover_comm")
 {
     // Create joy subscription
@@ -225,11 +224,8 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
     {
         // addition for autonomous mode, lockout manual movement, read from /cmd_vel instead.
         if (mode_toggle_){
-            v_ = v_auto_ * MAX_LINEAR_VEL;//normalize to MAX_LINEAR_VEL
-            if((v_ < 1.0) && (v_ < 0.4)){
-		v_ = 1.0;	
-	    }
-	    omega_ = omega_auto_;
+            v_ = (v_auto_* (MAX_LINEAR_VEL/MAX_AUTO_V)*(-msg->axes[controller_mappings_["R_trigger"]]+1));//scaled, and then made to still only turn on with controller
+	        omega_ = omega_auto_/MAX_AUTO_OMEGA;
         }
         else{
             double r_trig = -msg->axes[controller_mappings_["R_trigger"]] + 1; // Default unpressed is 1.0, down to -1 fully pressed
@@ -492,7 +488,7 @@ void RoverComm::gameControllerType()
         if (line.find("Name=") != std::string::npos)
         {
             // If found line with "Controller" or "Gamepad" in it.
-            bool xbox   = ((line.find("Microsoft Xbox") != std::string::npos) || (line.find("Xbox Wireless Controller") != std::string::npos));
+            bool xbox   = ((line.find("Microsoft Xbox") != std::string::npos) || (line.find("Xbox Wireless Controller") != std::string::npos) || (line.find("Microsoft Xbox One X pad") != std::string::npos));
             bool powerA = line.find("PowerA NSW") != std::string::npos;
             bool switchPro = line.find("Pro Controller") != std::string::npos;
             bool xbox_wired = line.find("Generic X-Box pad") != std::string::npos;

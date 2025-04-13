@@ -109,6 +109,11 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(PROGRAMS
+  scripts/point_ahead.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 # Build tests if enabled
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

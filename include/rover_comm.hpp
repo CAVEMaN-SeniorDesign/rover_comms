@@ -37,6 +37,8 @@
 
 #define MAX_LINEAR_VEL  1.5
 #define MAX_ANGULAR_VEL 1.0
+#define MAX_AUTO_OMEGA 2.2
+#define MAX_AUTO_V 0.5 // to be scaled up
 
 /*Common ports that are assigned on default (we should implement automatic port find and selection):
     /dev/ttyTHS1 - Jetson Nano built in UART pins on pin 8 (TX) and pin 10 (RX)
