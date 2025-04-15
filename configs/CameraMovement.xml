@@ -118,6 +118,88 @@
                 <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
             </Center>
         </Profile4>
+        <Profile5>
+            <Center_Right duration=".5">
+                <Cam_Pan_Radians>0.764049</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right>
+            <Center_Right_1 duration=".5">
+                <Cam_Pan_Radians>0.9494</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right_1>
+            <Center_Right_2 duration=".5">
+                <Cam_Pan_Radians>1.1348</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right_2>
+            <Center_Right_3 duration=".5">
+                <Cam_Pan_Radians>1.3202</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right_3>
+            <Center_Right_4 duration=".5">
+                <Cam_Pan_Radians>1.5056</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right_4>
+            <Center duration=".5">
+                <Cam_Pan_Radians>1.690728</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center>
+            <Center_Left_1 duration=".5">
+                <Cam_Pan_Radians>1.8873</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left_1>
+            <Center_Left_2 duration=".5">
+                <Cam_Pan_Radians>2.0836</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left_2>
+            <Center_Left_3 duration=".5">
+                <Cam_Pan_Radians>2.28</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left_3>
+            <Center_Left_4 duration=".5">
+                <Cam_Pan_Radians>2.4762</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left_4>
+            <Center_Left duration=".5">
+                <Cam_Pan_Radians>2.672476</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left>
+            <Center_Left_4 duration=".5">
+                <Cam_Pan_Radians>2.4762</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left_4>
+            <Center_Left_3 duration=".5">
+                <Cam_Pan_Radians>2.28</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left_3>
+            <Center_Left_2 duration=".5">
+                <Cam_Pan_Radians>2.0836</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left_2>
+            <Center_Left_1 duration=".5">
+                <Cam_Pan_Radians>1.8873</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Left_1>
+            <Center duration=".5">
+                <Cam_Pan_Radians>1.690728</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center>
+            <Center_Right_4 duration=".5">
+                <Cam_Pan_Radians>1.5056</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right_4>
+            <Center_Right_3 duration=".5">
+                <Cam_Pan_Radians>1.3202</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right_3>
+            <Center_Right_2 duration=".5">
+                <Cam_Pan_Radians>1.1348</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right_2>
+            <Center_Right_1 duration=".5">
+                <Cam_Pan_Radians>0.9494</Cam_Pan_Radians>
+                <Cam_Tilt_Radians>1.679951</Cam_Tilt_Radians>
+            </Center_Right_1>
+        </Profile5>
     </CameraMovement>
 </CameraMovementConfig>
 <!-- <CameraMovementConfig enable="true">    

@@ -37,8 +37,9 @@
 
 #define MAX_LINEAR_VEL  1.5
 #define MAX_ANGULAR_VEL 1.0
-#define MAX_AUTO_OMEGA 2.2
+#define MAX_AUTO_OMEGA 3.2
 #define MAX_AUTO_V 0.5 // to be scaled up
+#define AUTO_PORTION_OF_MAX 0.65 // multiplier to reduce max speed
 
 /*Common ports that are assigned on default (we should implement automatic port find and selection):
     /dev/ttyTHS1 - Jetson Nano built in UART pins on pin 8 (TX) and pin 10 (RX)
@@ -58,7 +59,7 @@ struct CameraMovement
 
 struct CT_Sender_Movements
 {
-    static const int maxLength = 20;
+    static const int maxLength = 25;
     int length = 0;
     int index                          = 0;
     double speed_mps[maxLength]  = {0U};
@@ -123,7 +124,7 @@ class RoverComm : public rclcpp::Node
         // sub for /cmd_vel_joy topics and publish to joystick topic
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
         rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
-        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_filtered_sub_;
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr visual_odom_sub_;
         std::string this_pkg_path = ament_index_cpp::get_package_share_directory("rover_comms");
 
         // config files
@@ -142,7 +143,7 @@ class RoverComm : public rclcpp::Node
         double v_auto_              = 0;
         double omega_auto_          = 0;
         
-        nav_msgs::msg::Odometry::SharedPtr odom_filtered_;
+        nav_msgs::msg::Odometry::SharedPtr visual_odom_;
         geometry_msgs::msg::PoseStamped goal_;
         double max_wheel_speed_rps_ = 18.75;
         double v_overrider_ctsender_;
@@ -188,6 +189,9 @@ class RoverComm : public rclcpp::Node
         struct CT_Sender_Movements move_sequence_;
 
         // camera movement vars
+        bool return_to_center_ = false;
+        double prev_cam_move_pan_;
+        double prev_cam_move_tilt_;
         struct CameraMovement profiles_[5];
         int camera_movement_profile_length_ = 0;
         int camera_movement_profile_index_  = 0;

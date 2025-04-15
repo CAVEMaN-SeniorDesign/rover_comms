@@ -1,4 +1,5 @@
 #include "rover_comm.hpp"
+#include <thread>
 
 RoverComm::RoverComm() : Node("rover_comm")
 {
@@ -8,7 +9,7 @@ RoverComm::RoverComm() : Node("rover_comm")
 
     // Odom publisher
     odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Encoders>(
-        "/odom_raw", 10);
+        "/odometry/filtered", 10);
 
     imu_raw_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
         "/imu_raw", 10);
@@ -19,8 +20,8 @@ RoverComm::RoverComm() : Node("rover_comm")
     cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
         "/cmd_vel", 25, std::bind(&RoverComm::cmd_vel_callback, this, std::placeholders::_1));
 
-    odom_filtered_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/odometry/filtered", 10,
+    visual_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+        "/odom", 10,
         std::bind(&RoverComm::odomCallback, this, std::placeholders::_1)
     );
 
@@ -114,32 +115,52 @@ void RoverComm::speak_callback()
 void RoverComm::cam_move_callback(){
 
     if(arm_toggle_ && cam_profile_move_enable_){
-        double time_elapsed = (this->get_clock()->now() - cam_move_last_move_time_).seconds();
-        struct CameraMovement curr_profile = profiles_[camera_movement_profile_index_];
+        if(!return_to_center_){
+            double time_elapsed = (this->get_clock()->now() - cam_move_last_move_time_).seconds();
+            struct CameraMovement curr_profile = profiles_[camera_movement_profile_index_];
 
-        int posIdx = curr_profile.index;
-        double posDuration = curr_profile.durations[posIdx];
+            int posIdx = curr_profile.index;
+            double posDuration = curr_profile.durations[posIdx];
 
-        if (time_elapsed >= posDuration){
-            RCLCPP_INFO(this->get_logger(), "posIdx: %d", posIdx);
-            RCLCPP_INFO(this->get_logger(), "posDur: %f", posDuration);
-            RCLCPP_INFO(this->get_logger(), "numPos: %d", curr_profile.length);
+            if (time_elapsed >= posDuration){
+                RCLCPP_INFO(this->get_logger(), "posIdx: %d", posIdx);
+                RCLCPP_INFO(this->get_logger(), "posDur: %f", posDuration);
+                RCLCPP_INFO(this->get_logger(), "numPos: %d", curr_profile.length);
 
-            posIdx++;
-            if(posIdx >= curr_profile.length){
-                posIdx = 0;
+                posIdx++;
+                if(posIdx >= curr_profile.length){
+                    posIdx = 0;
+                }
+
+                curr_profile.index = posIdx;
+                cam_move_last_move_time_ = this->get_clock()->now();
+                double new_pan = curr_profile.cam_pan_radians[posIdx];
+                double new_tilt = curr_profile.cam_tilt_radians[posIdx];
+                talker->SpeakCameraMovement(new_pan, new_tilt);
+                prev_cam_move_pan_ = new_pan;
+                prev_cam_move_tilt_ = new_tilt;
+                RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_pan, new_tilt);
+                profiles_[camera_movement_profile_index_] = curr_profile;
             }
-
-            curr_profile.index = posIdx;
-            cam_move_last_move_time_ = this->get_clock()->now();
-            double new_pan = curr_profile.cam_pan_radians[posIdx];
-            double new_tilt = curr_profile.cam_tilt_radians[posIdx];
-            talker->SpeakCameraMovement(new_pan, new_tilt);
-            RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_pan, new_tilt);
-            profiles_[camera_movement_profile_index_] = curr_profile;
+        
         }
         else{
-            // RCLCPP_INFO(this->get_logger(), "Waiting for camera movement to finish...");
+            int steps = 10;
+            double center_pan = profiles_[0].cam_pan_radians[0];
+            double center_tilt = profiles_[0].cam_tilt_radians[0];
+
+            double step_pan = (center_pan - prev_cam_move_pan_)/steps;
+            double step_tilt = (center_tilt - prev_cam_move_tilt_)/steps;
+
+
+            for(int i = 1; i < steps; i++){
+                talker->SpeakCameraMovement(prev_cam_move_pan_ + (i * step_pan), prev_cam_move_tilt_ + (i * step_tilt));
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            }
+
+            talker->SpeakCameraMovement(center_pan, center_tilt);
+            return_to_center_ = false;
+            camera_movement_profile_index_ = 0;
         }
     }
 }
@@ -224,7 +245,7 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
     {
         // addition for autonomous mode, lockout manual movement, read from /cmd_vel instead.
         if (mode_toggle_){
-            v_ = (v_auto_* (MAX_LINEAR_VEL/MAX_AUTO_V)*(-msg->axes[controller_mappings_["R_trigger"]]+1));//scaled, and then made to still only turn on with controller
+            v_ = (v_auto_* (MAX_LINEAR_VEL/MAX_AUTO_V)*AUTO_PORTION_OF_MAX);//scaled, and then made to still only turn on with controller
 	        omega_ = omega_auto_/MAX_AUTO_OMEGA;
         }
         else{
@@ -260,26 +281,26 @@ void RoverComm::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 
 void RoverComm::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
     // Just gets current odometry/filtered pose and saves for use later
-    odom_filtered_ = msg;
+    visual_odom_ = msg;
 }
 
 void RoverComm::calculateGoal(){
-    double x = odom_filtered_->pose.pose.position.x;
-    double y = odom_filtered_->pose.pose.position.y;
+    double x = visual_odom_->pose.pose.position.x;
+    double y = visual_odom_->pose.pose.position.y;
 
     // Extract yaw from quaternion
     tf2::Quaternion q(
-        odom_filtered_->pose.pose.orientation.x,
-        odom_filtered_->pose.pose.orientation.y,
-        odom_filtered_->pose.pose.orientation.z,
-        odom_filtered_->pose.pose.orientation.w
+        visual_odom_->pose.pose.orientation.x,
+        visual_odom_->pose.pose.orientation.y,
+        visual_odom_->pose.pose.orientation.z,
+        visual_odom_->pose.pose.orientation.w
     );
     double roll, pitch, yaw;
     tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
     // Compute 5 meters forward
-    double goal_x = x + 2.0 * std::cos(yaw);
-    double goal_y = y + 2.0 * std::sin(yaw);
+    double goal_x = x + 1.0 * std::cos(yaw);
+    double goal_y = y + 1.0 * std::sin(yaw);
 
     // Create goal message
     goal_.header.stamp = this->now();
@@ -287,7 +308,7 @@ void RoverComm::calculateGoal(){
     goal_.pose.position.x = goal_x;
     goal_.pose.position.y = goal_y;
     goal_.pose.position.z = 0.0;
-    goal_.pose.orientation = odom_filtered_->pose.pose.orientation; // same heading
+    goal_.pose.orientation = visual_odom_->pose.pose.orientation; // same heading
 
     // RCLCPP_INFO(this->get_logger(), "Publishing goal at (%.2f, %.2f)", goal_x, goal_y);
     goal_pub_->publish(goal_);
