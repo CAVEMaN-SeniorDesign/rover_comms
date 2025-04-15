@@ -133,7 +133,7 @@ void RoverCommsListener::HearOdometry(const cave_talk::Imu &IMU, const cave_talk
     imu_msg_raw.header.stamp = rover_comm_node_->now();
     imu_msg_raw.linear_acceleration.x = IMU.accel().x_meters_per_second_squared();
     imu_msg_raw.linear_acceleration.y = IMU.accel().y_meters_per_second_squared();
-    imu_msg_raw.linear_acceleration.z = IMU.accel().z_meters_per_second_squared();
+    imu_msg_raw.linear_acceleration.z = 0.0; //IMU.accel().z_meters_per_second_squared();
     imu_msg_raw.angular_velocity.x = IMU.gyro().roll_radians_per_second();
     imu_msg_raw.angular_velocity.y = IMU.gyro().pitch_radians_per_second();
     imu_msg_raw.angular_velocity.z = IMU.gyro().yaw_radians_per_second();
