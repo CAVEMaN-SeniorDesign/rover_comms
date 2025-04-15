@@ -15,13 +15,19 @@ RoverComm::RoverComm() : Node("rover_comm")
         "/imu_raw", 10);
 
     imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
-        "/imu_data", 10);
+        "/imu_madgwick", 10);
+
+    air_quality_read_pub_ = this->create_publisher<rover_interfaces::msg::Airquality>(
+        "/air_quality", 10);
 
     cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
         "/cmd_vel", 25, std::bind(&RoverComm::cmd_vel_callback, this, std::placeholders::_1));
 
+    speak_movement_pub_ = this->create_publisher<rover_interfaces::msg::Speakmovement>(
+        "/speak_movement", 10);
+
     visual_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/odom", 10,
+        "/encoders", 10,
         std::bind(&RoverComm::odomCallback, this, std::placeholders::_1)
     );
 
@@ -194,6 +200,9 @@ void RoverComm::ct_cmd_sender_callback(){
             v_overrider_ctsender_ = new_speed;
             omega_overrider_ctsender_ = new_turn_rate;
             talker->SpeakMovement(new_speed, new_turn_rate);
+            speak_movement_msg_.linear = new_speed;
+            speak_movement_msg_.angular = new_turn_rate;
+            speak_movement_pub_->publish(speak_movement_msg_);
             RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_speed, new_turn_rate);
         }
         else{
@@ -464,6 +473,9 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
                 std::string error_Movement_str = CaveTalk_ErrorToString(error_Movement);
                 RCLCPP_INFO(this->get_logger(), error_Movement_str.c_str());
             }
+            speak_movement_msg_.linear = v_;
+            speak_movement_msg_.angular = omega_;
+            speak_movement_pub_->publish(speak_movement_msg_);
             RCLCPP_INFO(this->get_logger(), command_vel_msg.c_str());
 
             prev_v_     = v_;
@@ -483,9 +495,6 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             prev_cam_tilt_ = cam_tilt_;
         }
 
-        // std::string command_vel_msg = "Linear_Vel: " + std::to_string(v) + ", Angular Vel: " + std::to_string(omega);
-        // talker->SpeakMovement(v, omega);
-        // RCLCPP_INFO(this->get_logger(), command_vel_msg);
     }
     else if (!waiting_booga)
     {

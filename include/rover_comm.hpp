@@ -1,9 +1,11 @@
 #ifndef ROVER_COMM_HPP
 #define ROVER_COMM_HPP
 
+// ros2 helpers
 #include "ament_index_cpp/get_package_share_directory.hpp" // for finding package path
-
 #include "rclcpp/rclcpp.hpp"
+
+// default msgs
 #include <sensor_msgs/msg/joy.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/twist.hpp>
@@ -12,28 +14,35 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+
+// custom msgs
 #include "rover_interfaces/msg/encoders.hpp"
+#include "rover_interfaces/msg/airquality.hpp"
+#include "rover_interfaces/msg/speakmovement.hpp"
+
+
+// datatypes, mathematics, and algorithms
 #include <cmath>
 #include <algorithm>
 #include <unordered_map>
-#include <cstdlib>   // for std::get_env for controller selection
-
-#include <csignal>
-#include <unistd.h>  // For sleep()
-
-#include <cstddef>
-#include <functional>
-#include <memory>
-#include <vector>
-#include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
+// utility
+#include <csignal>
+#include <unistd.h>  // For sleep()
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <fstream>
+#include <iostream>
+#include <cstdlib>   // for std::get_env for controller selection
+#include <chrono>
+
+// uh idk how to categorize
 #include "cave_talk.h"
 #include "rover_comms_serial.hpp"
 #include "tinyxml2.h"
-#include <chrono>
 
 #define MAX_LINEAR_VEL  1.5
 #define MAX_ANGULAR_VEL 1.0
@@ -79,10 +88,13 @@ class RoverComm : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr cam_move_timer_;
         rclcpp::TimerBase::SharedPtr ct_sender_timer_;
         rclcpp::Publisher<rover_interfaces::msg::Encoders>::SharedPtr odom_read_pub_; // public to be accessed from callbacks
+        rclcpp::Publisher<rover_interfaces::msg::Airquality>::SharedPtr air_quality_read_pub_; // public to be accessed from callbacks
+        rclcpp::Publisher<rover_interfaces::msg::Speakmovement>::SharedPtr speak_movement_pub_; // public to be accessed from callbacks
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_; // public to be accessed from callbacks
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
 	    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_raw_pub_; // public to be accessed from callbacks
         rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pub_;
+
         bool looping       = true;
         bool waiting_booga = true;
         
@@ -142,7 +154,7 @@ class RoverComm : public rclcpp::Node
         double prev_omega_          = 0;
         double v_auto_              = 0;
         double omega_auto_          = 0;
-        
+        rover_interfaces::msg::Speakmovement speak_movement_msg_ = rover_interfaces::msg::Speakmovement();
         nav_msgs::msg::Odometry::SharedPtr visual_odom_;
         geometry_msgs::msg::PoseStamped goal_;
         double max_wheel_speed_rps_ = 18.75;
