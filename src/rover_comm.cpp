@@ -1,6 +1,5 @@
 #include "rover_comm.hpp"
 #include <thread>
-
 RoverComm::RoverComm() : Node("rover_comm")
 {
     // Create joy subscription
@@ -297,7 +296,6 @@ void RoverComm::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
     // otherwise, mark inactive if it has been longer than cmd_vel_inactive_theshold_ seconds.
     else if(((this->get_clock()->now() - last_cmd_vel_).seconds() > cmd_vel_inactive_threshold_)){
         cmd_vel_inactive_ = true;
-        return_to_center_ = false; // deactivate lock center
         camera_movement_profile_index_ = 5; // slow pan side-to-side for RTABMAP to regain context
     }
 }

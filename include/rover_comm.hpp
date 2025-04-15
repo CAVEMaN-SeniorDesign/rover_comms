@@ -205,7 +205,7 @@ class RoverComm : public rclcpp::Node
         bool cmd_vel_inactive_ = true;
         double prev_cam_move_pan_;
         double prev_cam_move_tilt_;
-        struct CameraMovement profiles_[5];
+        struct CameraMovement profiles_[6];
         int camera_movement_profile_length_ = 0;
         int camera_movement_profile_index_  = 0;
 
