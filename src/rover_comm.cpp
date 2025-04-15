@@ -3,30 +3,36 @@
 RoverComm::RoverComm() : Node("rover_comm")
 {
     // Create joy subscription
+// Create joy subscription
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1));
 
-    // Odom publisher
+    // Odom publisher (encoders only)
     odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Encoders>(
-        "/odom_raw", 10);
+        "/encoders", 10);
 
     imu_raw_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
         "/imu_raw", 10);
 
     imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
-        "/imu_data", 10);
+        "/imu_madgwick", 1000); // very high since we're not even using rn.
+
+    air_quality_read_pub_ = this->create_publisher<rover_interfaces::msg::Airquality>(
+        "/air_quality", 100);
+
+    fused_odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+        "/odom", 10,
+        std::bind(&RoverComm::odomCallback, this, std::placeholders::_1)
+    );
 
     cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
         "/cmd_vel", 25, std::bind(&RoverComm::cmd_vel_callback, this, std::placeholders::_1));
 
-    odom_filtered_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/odometry/filtered", 10,
-        std::bind(&RoverComm::odomCallback, this, std::placeholders::_1)
-    );
+    speak_movement_pub_ = this->create_publisher<rover_interfaces::msg::Speakmovement>(
+            "/speak_movement", 200);
 
     goal_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-        "/goal_pose", 10);
-
+        "/goal_pose", 1000); // also very high as we have a separate exploration package now
     
     // Check for connected game controllers
     this->gameControllerType();
@@ -173,6 +179,9 @@ void RoverComm::ct_cmd_sender_callback(){
             v_overrider_ctsender_ = new_speed;
             omega_overrider_ctsender_ = new_turn_rate;
             talker->SpeakMovement(new_speed, new_turn_rate);
+            speak_movement_msg_.linear = new_speed;
+            speak_movement_msg_.angular = new_turn_rate;
+            speak_movement_pub_->publish(speak_movement_msg_);
             RCLCPP_INFO(this->get_logger(), "Moved to new position %f, %f", new_speed, new_turn_rate);
         }
         else{
@@ -256,23 +265,36 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
 void RoverComm::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg){
     v_auto_ = msg->linear.x;
     omega_auto_ = msg->angular.z;
+    // if cmd_vel is non-zero values, then it is active and can return to center
+    if ((v_auto_ != 0.0) && (omega_auto_ != 0.0)){
+        last_cmd_vel_ = this->get_clock()->now();
+        camera_movement_profile_index_ = 0; // reset profile to default
+        cmd_vel_inactive_ = false;
+        // return_to_center_ = true;
+    }
+    // otherwise, mark inactive if it has been longer than cmd_vel_inactive_theshold_ seconds.
+    else if(((this->get_clock()->now() - last_cmd_vel_).seconds() > cmd_vel_inactive_threshold_)){
+        cmd_vel_inactive_ = true;
+        // return_to_center_ = false; // deactivate lock center
+        // camera_movement_profile_index_ = 5; // slow pan side-to-side for RTABMAP to regain context
+    }
 }
 
 void RoverComm::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
     // Just gets current odometry/filtered pose and saves for use later
-    odom_filtered_ = msg;
+    visual_odom_msg = msg;
 }
 
 void RoverComm::calculateGoal(){
-    double x = odom_filtered_->pose.pose.position.x;
-    double y = odom_filtered_->pose.pose.position.y;
+    double x = visual_odom_msg->pose.pose.position.x;
+    double y = visual_odom_msg->pose.pose.position.y;
 
     // Extract yaw from quaternion
     tf2::Quaternion q(
-        odom_filtered_->pose.pose.orientation.x,
-        odom_filtered_->pose.pose.orientation.y,
-        odom_filtered_->pose.pose.orientation.z,
-        odom_filtered_->pose.pose.orientation.w
+        visual_odom_msg->pose.pose.orientation.x,
+        visual_odom_msg->pose.pose.orientation.y,
+        visual_odom_msg->pose.pose.orientation.z,
+        visual_odom_msg->pose.pose.orientation.w
     );
     double roll, pitch, yaw;
     tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
@@ -287,7 +309,7 @@ void RoverComm::calculateGoal(){
     goal_.pose.position.x = goal_x;
     goal_.pose.position.y = goal_y;
     goal_.pose.position.z = 0.0;
-    goal_.pose.orientation = odom_filtered_->pose.pose.orientation; // same heading
+    goal_.pose.orientation = visual_odom_msg->pose.pose.orientation; // same heading
 
     // RCLCPP_INFO(this->get_logger(), "Publishing goal at (%.2f, %.2f)", goal_x, goal_y);
     goal_pub_->publish(goal_);
@@ -432,8 +454,14 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
             //MARK: add error checking
             if(CT_sender_enable_){
                 error_Movement = talker->SpeakMovement(v_overrider_ctsender_, omega_overrider_ctsender_);
+                speak_movement_msg_.linear = v_overrider_ctsender_;
+                speak_movement_msg_.angular = omega_overrider_ctsender_;
+                speak_movement_pub_->publish(speak_movement_msg_);
             }else if(manual_enable_){
                 error_Movement = talker->SpeakMovement(v_, omega_);
+                speak_movement_msg_.linear = v_;
+                speak_movement_msg_.angular = omega_;
+                speak_movement_pub_->publish(speak_movement_msg_);
             }
 
             last_speak_movement_ = this->get_clock()->now();

@@ -35,7 +35,9 @@ class RoverCommsListener : public cave_talk::ListenerCallbacks
         void HearConfigWheelSpeedControl(const cave_talk::PID &wheel_0_params, const cave_talk::PID &wheel_1_params, const cave_talk::PID &wheel_2_params, const cave_talk::PID &wheel_3_params, const bool enabled) override;
         void HearConfigSteeringControl(const cave_talk::PID &turn_rate_params, const bool enabled) override;
         void MadgwickAHRSupdateIMU(double gx, double gy, double gz, double ax, double ay, double az, std::chrono::milliseconds dt);
-    private:
+        void HearAirQuality( uint32_t dust_ug_per_m3,  uint32_t gas_ppm,  double temperature_celsius) override;
+
+        private:
         std::shared_ptr<RoverComm> rover_comm_node_;
 };
 

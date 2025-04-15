@@ -162,7 +162,15 @@ void RoverCommsListener::HearLog(const char *const log)
 {
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard log: %s", log);
 }
-
+void RoverCommsListener::HearAirQuality( uint32_t dust_ug_per_m3, uint32_t gas_ppm,  double temperature_celsius)
+{
+    auto aq_msg = rover_interfaces::msg::Airquality();
+    aq_msg.dust_ug_per_m3 = dust_ug_per_m3;
+    aq_msg.gas_ppm = gas_ppm;
+    aq_msg.temperature_celsius = temperature_celsius;
+    rover_comm_node_->air_quality_read_pub_->publish(aq_msg);
+    RCLCPP_INFO(rover_comm_node_->get_logger(), "AQ msgs sent");
+}
 void RoverCommsListener::MadgwickAHRSupdateIMU(double gx, double gy, double gz,
                                                double ax, double ay, double az, std::chrono::milliseconds dt)
 {
