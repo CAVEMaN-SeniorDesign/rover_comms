@@ -202,6 +202,7 @@ class RoverComm : public rclcpp::Node
 
         // camera movement vars
         bool return_to_center_ = false;
+        bool cmd_vel_inactive_ = true;
         double prev_cam_move_pan_;
         double prev_cam_move_tilt_;
         struct CameraMovement profiles_[5];
@@ -217,7 +218,9 @@ class RoverComm : public rclcpp::Node
         rclcpp::Time CT_sender_last_move_time_ = this->get_clock()->now();
         rclcpp::Time cam_move_profile_button_ = this->get_clock()->now();
         rclcpp::Time last_set_goal_ = this->get_clock()->now();
+        rclcpp::Time last_cmd_vel_ = this->get_clock()->now();
         double toggle_button_timeout_     = 0.5; // half-second time-out
+        double cmd_vel_inactive_threshold_ = 5.0; // if asleep for 5 seconds, move camera around
 };
 
 #endif // ROVER_COMM_HPP

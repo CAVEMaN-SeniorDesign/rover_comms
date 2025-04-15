@@ -7,32 +7,32 @@ RoverComm::RoverComm() : Node("rover_comm")
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         "/joy", 10, std::bind(&RoverComm::joyCallback, this, std::placeholders::_1));
 
-    // Odom publisher
+    // Odom publisher (encoders only)
     odom_read_pub_ = this->create_publisher<rover_interfaces::msg::Encoders>(
-        "/odometry/filtered", 10);
+        "/encoders", 10);
 
     imu_raw_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
         "/imu_raw", 10);
 
     imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
-        "/imu_madgwick", 10);
+        "/imu_madgwick", 1000); // very high since we're not even using rn.
 
     air_quality_read_pub_ = this->create_publisher<rover_interfaces::msg::Airquality>(
-        "/air_quality", 10);
+        "/air_quality", 100);
 
     cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
         "/cmd_vel", 25, std::bind(&RoverComm::cmd_vel_callback, this, std::placeholders::_1));
 
     speak_movement_pub_ = this->create_publisher<rover_interfaces::msg::Speakmovement>(
-        "/speak_movement", 10);
+        "/speak_movement", 200);
 
     visual_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/encoders", 10,
+        "/odom", 10,
         std::bind(&RoverComm::odomCallback, this, std::placeholders::_1)
     );
 
     goal_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-        "/goal_pose", 10);
+        "/goal_pose", 1000); // also very high as we have a separate exploration package now
 
     
     // Check for connected game controllers
@@ -253,7 +253,8 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
     if (game_controller_type_ == "xbox")
     {
         // addition for autonomous mode, lockout manual movement, read from /cmd_vel instead.
-        if (mode_toggle_){
+        // additionally, requires cmd_vel to be published non-zero, return_to_center_ for camera to be active
+        if (mode_toggle_ && (!cmd_vel_inactive_) && (return_to_center_ == true)){
             v_ = (v_auto_* (MAX_LINEAR_VEL/MAX_AUTO_V)*AUTO_PORTION_OF_MAX);//scaled, and then made to still only turn on with controller
 	        omega_ = omega_auto_/MAX_AUTO_OMEGA;
         }
@@ -286,6 +287,19 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
 void RoverComm::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg){
     v_auto_ = msg->linear.x;
     omega_auto_ = msg->angular.z;
+    // if cmd_vel is non-zero values, then it is active and can return to center
+    if ((v_auto_ != 0.0) && (omega_auto_ != 0.0)){
+        last_cmd_vel_ = this->get_clock()->now();
+        camera_movement_profile_index_ = 0; // reset profile to default
+        cmd_vel_inactive_ = false;
+        return_to_center_ = true;
+    }
+    // otherwise, mark inactive if it has been longer than cmd_vel_inactive_theshold_ seconds.
+    else if(((this->get_clock()->now() - last_cmd_vel_).seconds() > cmd_vel_inactive_threshold_)){
+        cmd_vel_inactive_ = true;
+        return_to_center_ = false; // deactivate lock center
+        camera_movement_profile_index_ = 5; // slow pan side-to-side for RTABMAP to regain context
+    }
 }
 
 void RoverComm::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
