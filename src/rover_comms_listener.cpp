@@ -163,9 +163,9 @@ void RoverCommsListener::HearLog(const char *const log)
     RCLCPP_INFO(rover_comm_node_->get_logger(), "Heard log: %s", log);
 }
 
-
 void RoverCommsListener::HearAirQuality(const uint32_t dust_ug_per_m3, const uint32_t gas_ppm, const double temperature_celsius)
 {
+
     RCLCPP_INFO(rover_comm_node_->get_logger(), "DAVID, WE'RE RECEIVING AIR QUALITY INFO, PUT IT IN THE ROSBAG");
 }
 
