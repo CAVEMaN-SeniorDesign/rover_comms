@@ -572,7 +572,7 @@ void RoverComm::gameControllerType()
                 controller_mappings_["D_y"] = 7; // axes
                 controller_mappings_["lights"] = 3; // button
                 controller_mappings_["arm"] = 1; // button
-                controller_mappings_["mode"] = 7; // TODO: Figure out later
+                controller_mappings_["mode"] = 7; 
                 controller_mappings_["L_joy_x"] = 0; // only x is used for steering
                 controller_mappings_["L_joy_y"] = 1; //
                 controller_mappings_["goal"] = 0;
@@ -586,7 +586,7 @@ void RoverComm::gameControllerType()
                 controller_mappings_["D_y"] = 7; // axes
                 controller_mappings_["lights"] = 4; // button
                 controller_mappings_["arm"] = 1; // button
-                controller_mappings_["mode"] = -1; // TODO: Figure out later
+                controller_mappings_["mode"] = 11; 
                 controller_mappings_["L_joy_x"] = 0; // only x is used for steering
                 controller_mappings_["L_joy_y"] = 1; //
                 controller_mappings_["goal"] = 0;
