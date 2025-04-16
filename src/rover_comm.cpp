@@ -536,8 +536,8 @@ void RoverComm::gameControllerType()
                 controller_mappings_["goal"] = 0;
             }
             else{
-                controller_mappings_["L_trigger"] = 4; // analog driving
-                controller_mappings_["R_trigger"] = 5; // analog driving
+                controller_mappings_["L_trigger"] = 5; // analog driving
+                controller_mappings_["R_trigger"] = 4; // analog driving
                 controller_mappings_["L_shoulder"] = 6; // button
                 controller_mappings_["R_shoulder"] = 7; // button
                 controller_mappings_["D_x"] = 6; // axes
