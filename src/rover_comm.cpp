@@ -30,10 +30,6 @@ RoverComm::RoverComm() : Node("rover_comm")
         std::bind(&RoverComm::odomCallback, this, std::placeholders::_1)
     );
 
-    goal_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-        "/goal_pose", 1000); // also very high as we have a separate exploration package now
-
-    
     // Check for connected game controllers
     this->gameControllerType();
 
@@ -288,7 +284,6 @@ void RoverComm::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
     // if cmd_vel is non-zero values, then it is active and can return to center
     if ((v_auto_ != 0.0) && (omega_auto_ != 0.0)){
         last_cmd_vel_ = this->get_clock()->now();
-        camera_movement_profile_index_ = 0; // reset profile to default
         cmd_vel_inactive_ = false;
     }
     // otherwise, mark inactive if it has been longer than cmd_vel_inactive_theshold_ seconds.
@@ -300,36 +295,6 @@ void RoverComm::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 void RoverComm::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
     // Just gets current odometry/filtered pose and saves for use later
     visual_odom_ = msg;
-}
-
-void RoverComm::calculateGoal(){
-    double x = visual_odom_->pose.pose.position.x;
-    double y = visual_odom_->pose.pose.position.y;
-
-    // Extract yaw from quaternion
-    tf2::Quaternion q(
-        visual_odom_->pose.pose.orientation.x,
-        visual_odom_->pose.pose.orientation.y,
-        visual_odom_->pose.pose.orientation.z,
-        visual_odom_->pose.pose.orientation.w
-    );
-    double roll, pitch, yaw;
-    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
-
-    // Compute 5 meters forward
-    double goal_x = x + 1.0 * std::cos(yaw);
-    double goal_y = y + 1.0 * std::sin(yaw);
-
-    // Create goal message
-    goal_.header.stamp = this->now();
-    goal_.header.frame_id = "map";
-    goal_.pose.position.x = goal_x;
-    goal_.pose.position.y = goal_y;
-    goal_.pose.position.z = 0.0;
-    goal_.pose.orientation = visual_odom_->pose.pose.orientation; // same heading
-
-    // RCLCPP_INFO(this->get_logger(), "Publishing goal at (%.2f, %.2f)", goal_x, goal_y);
-    goal_pub_->publish(goal_);
 }
 
 void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
@@ -453,13 +418,6 @@ void RoverComm::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
             last_arm_toggle_ = this->get_clock()->now();
         }
-
-        if (msg->buttons[controller_mappings_["goal"]] && ((this->get_clock()->now() - last_set_goal_).seconds() > toggle_button_timeout_))
-        {
-            calculateGoal();
-            last_set_goal_ = this->get_clock()->now();
-        }
-
 
         if ((first_log || (v_ != prev_v_ || omega_ != prev_omega_)) || (this->get_clock()->now() - last_speak_movement_).seconds() > 0.75)
         {

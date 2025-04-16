@@ -93,7 +93,6 @@ class RoverComm : public rclcpp::Node
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_; // public to be accessed from callbacks
         std::string CaveTalk_ErrorToString(CaveTalk_Error_t error); // map to string outputs
 	    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_raw_pub_; // public to be accessed from callbacks
-        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pub_;
 
         bool looping       = true;
         bool waiting_booga = true;
@@ -156,7 +155,6 @@ class RoverComm : public rclcpp::Node
         double omega_auto_          = 0;
         rover_interfaces::msg::Speakmovement speak_movement_msg_ = rover_interfaces::msg::Speakmovement();
         nav_msgs::msg::Odometry::SharedPtr visual_odom_;
-        geometry_msgs::msg::PoseStamped goal_;
         double max_wheel_speed_rps_ = 18.75;
         double v_overrider_ctsender_;
         double omega_overrider_ctsender_;
@@ -217,7 +215,6 @@ class RoverComm : public rclcpp::Node
         rclcpp::Time cam_move_last_move_time_ = this->get_clock()->now();
         rclcpp::Time CT_sender_last_move_time_ = this->get_clock()->now();
         rclcpp::Time cam_move_profile_button_ = this->get_clock()->now();
-        rclcpp::Time last_set_goal_ = this->get_clock()->now();
         rclcpp::Time last_cmd_vel_ = this->get_clock()->now();
         double toggle_button_timeout_     = 0.5; // half-second time-out
         double cmd_vel_inactive_threshold_ = 5.0; // if asleep for 5 seconds, move camera around
