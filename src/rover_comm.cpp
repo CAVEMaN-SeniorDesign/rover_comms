@@ -252,8 +252,7 @@ void RoverComm::calculateMovement(const sensor_msgs::msg::Joy::SharedPtr msg){
     if (game_controller_type_ == "xbox")
     {
         // addition for autonomous mode, lockout manual movement, read from /cmd_vel instead.
-        // additionally, requires cmd_vel to be published non-zero, return_to_center_ for camera to be active
-        if (mode_toggle_ && (!cmd_vel_inactive_) && (return_to_center_ == true)){
+        if (mode_toggle_ && (!cmd_vel_inactive_)){
             v_ = (v_auto_* (MAX_LINEAR_VEL/MAX_AUTO_V)*AUTO_PORTION_OF_MAX);//scaled, and then made to still only turn on with controller
 	        omega_ = omega_auto_/MAX_AUTO_OMEGA;
         }
@@ -291,12 +290,10 @@ void RoverComm::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
         last_cmd_vel_ = this->get_clock()->now();
         camera_movement_profile_index_ = 0; // reset profile to default
         cmd_vel_inactive_ = false;
-        return_to_center_ = true;
     }
     // otherwise, mark inactive if it has been longer than cmd_vel_inactive_theshold_ seconds.
     else if(((this->get_clock()->now() - last_cmd_vel_).seconds() > cmd_vel_inactive_threshold_)){
         cmd_vel_inactive_ = true;
-        camera_movement_profile_index_ = 5; // slow pan side-to-side for RTABMAP to regain context
     }
 }
 
